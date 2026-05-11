@@ -6,11 +6,11 @@ import {
 import { InflationPoint } from '../../types';
 import { formatPct } from '../../formatters';
 
-interface Props { data: InflationPoint[] }
+interface Props { data: InflationPoint[]; ipcaLabel?: string }
 
-const SERIES = [
+const makeSeries = (ipcaLabel: string) => [
   { key: 'personalMonthly', label: 'Minha Inflação', colorPos: '#8B5CF6', colorNeg: '#C4B5FD' },
-  { key: 'ipcaMonthly',     label: 'IPCA Oficial',   colorPos: '#06B6D4', colorNeg: '#67E8F9' },
+  { key: 'ipcaMonthly',     label: ipcaLabel,        colorPos: '#06B6D4', colorNeg: '#67E8F9' },
 ] as const;
 
 type SeriesKey = typeof SERIES[number]['key'];
@@ -88,7 +88,8 @@ function CustomLegend({
   );
 }
 
-export default function MonthlyBarChart({ data }: Props) {
+export default function MonthlyBarChart({ data, ipcaLabel = 'IPCA Oficial' }: Props) {
+  const SERIES = makeSeries(ipcaLabel);
   const chartData = data.slice(1);
   const [hidden, setHidden] = useState<Set<SeriesKey>>(new Set());
 
@@ -148,7 +149,7 @@ export default function MonthlyBarChart({ data }: Props) {
 
           <Bar
             dataKey="ipcaMonthly"
-            name="IPCA Oficial"
+            name={ipcaLabel}
             radius={[4, 4, 0, 0]}
             maxBarSize={40}
             hide={hidden.has('ipcaMonthly')}

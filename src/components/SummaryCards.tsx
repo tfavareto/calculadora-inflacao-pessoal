@@ -8,6 +8,7 @@ interface Props {
   firstDate: string | null;
   lastDate: string | null;
   inflationData: InflationPoint[];
+  ipcaLabel?: string;
 }
 
 interface CardProps {
@@ -65,6 +66,7 @@ export default function SummaryCards({
   firstDate,
   lastDate,
   inflationData,
+  ipcaLabel = 'IPCA Acumulado',
 }: Props) {
   const last = inflationData[inflationData.length - 1];
   const personalAcc = last?.personalAccumulated ?? null;
@@ -110,7 +112,7 @@ export default function SummaryCards({
         }
       />
       <Card
-        title="IPCA Acumulado"
+        title={ipcaLabel}
         value={ipcaAcc !== null ? formatPct(ipcaAcc) : '—'}
         sub={last ? `Mensal: ${formatPct(last.ipcaMonthly)}` : 'Aguardando dados'}
         Icon={Calendar}

@@ -6,11 +6,11 @@ import {
 import { InflationPoint } from '../../types';
 import { formatPct } from '../../formatters';
 
-interface Props { data: InflationPoint[] }
+interface Props { data: InflationPoint[]; ipcaLabel?: string }
 
-const SERIES = [
+const makeSeries = (ipcaLabel: string) => [
   { key: 'personalAccumulated', label: 'Minha Inflação', color: '#8B5CF6', grad: 'gradPersonal', dash: undefined },
-  { key: 'ipcaAccumulated',     label: 'IPCA Oficial',   color: '#06B6D4', grad: 'gradIPCA',     dash: '5 3'    },
+  { key: 'ipcaAccumulated',     label: ipcaLabel,        color: '#06B6D4', grad: 'gradIPCA',     dash: '5 3'    },
 ] as const;
 
 type SeriesKey = typeof SERIES[number]['key'];
@@ -105,7 +105,8 @@ function CustomLegend({
   );
 }
 
-export default function InflationAreaChart({ data }: Props) {
+export default function InflationAreaChart({ data, ipcaLabel = 'IPCA Oficial' }: Props) {
+  const SERIES = makeSeries(ipcaLabel);
   const [hidden, setHidden] = useState<Set<SeriesKey>>(new Set());
 
   function toggleSeries(key: SeriesKey) {
@@ -172,7 +173,7 @@ export default function InflationAreaChart({ data }: Props) {
           <Area
             type="monotone"
             dataKey="ipcaAccumulated"
-            name="IPCA Oficial"
+            name={ipcaLabel}
             stroke="#06B6D4"
             strokeWidth={2}
             fill="url(#gradIPCA)"

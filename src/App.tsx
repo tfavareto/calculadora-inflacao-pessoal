@@ -99,10 +99,11 @@ export default function App() {
       )}
       {page === 'mycity' && (
         <MyCity
+          transactions={transactions}
+          inflationData={inflationData}
+          categoryWeights={categoryWeights}
           selectedRegionCode={selectedRegionCode}
           onSelect={handleSelectRegion}
-          regionalIpca={regionalIpca}
-          nationalIpca={nationalIpca}
           regionalLoading={regionalLoading}
         />
       )}

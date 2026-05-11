@@ -1,286 +1,268 @@
 import { useState } from 'react';
-import { MapPin, CheckCircle2, XCircle, Info, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { MapPin, Settings2, CheckCircle2, XCircle, Info, ArrowRight } from 'lucide-react';
+import { Transaction, InflationPoint, CategoryWeight } from '../types';
+import { getSummary } from '../calculator';
 import { REGIONS, getRegion } from '../regions';
+import SummaryCards from '../components/SummaryCards';
+import InflationAreaChart from '../components/charts/InflationAreaChart';
+import MonthlyBarChart from '../components/charts/MonthlyBarChart';
 import CustomSelect from '../components/CustomSelect';
-import { formatPct } from '../formatters';
+import { formatBRL, formatPct } from '../formatters';
 
 interface Props {
+  transactions: Transaction[];
+  inflationData: InflationPoint[];
+  categoryWeights: CategoryWeight[];
   selectedRegionCode: string | null;
-  onSelect: (ibgeCode: string | null) => void;
-  regionalIpca: Record<string, number>;
-  nationalIpca: Record<string, number>;
   regionalLoading: boolean;
-}
-
-function last12Months(): string[] {
-  const months: string[] = [];
-  const now = new Date();
-  for (let i = 11; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    months.push(`${y}${m}`);
-  }
-  return months;
-}
-
-function monthLabel(yyyymm: string): string {
-  const months = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-  const m = parseInt(yyyymm.slice(4, 6), 10) - 1;
-  const y = yyyymm.slice(2, 4);
-  return `${months[m]}/${y}`;
+  onSelect: (ibgeCode: string | null) => void;
 }
 
 export default function MyCity({
+  transactions,
+  inflationData,
+  categoryWeights,
   selectedRegionCode,
-  onSelect,
-  regionalIpca,
-  nationalIpca,
   regionalLoading,
+  onSelect,
 }: Props) {
+  const [showSelector, setShowSelector] = useState(!selectedRegionCode);
   const [draft, setDraft] = useState<string>(selectedRegionCode ?? '');
+
   const region = selectedRegionCode ? getRegion(selectedRegionCode) : null;
+  const ipcaLabel = region ? `IPCA de ${region.city}` : 'IPCA Regional';
 
-  const months = last12Months();
-  const hasRegional = Object.keys(regionalIpca).length > 0 && selectedRegionCode;
-
-  // Acumulado 12 meses: produto de (1 + var/100)
-  function accumulated(data: Record<string, number>, keys: string[]): number {
-    return keys.reduce((acc, k) => {
-      const v = data[k];
-      return v !== undefined ? acc * (1 + v / 100) : acc;
-    }, 1) * 100 - 100;
-  }
-
-  const available = months.filter((m) => regionalIpca[m] !== undefined || nationalIpca[m] !== undefined);
-  const regAcc  = hasRegional ? accumulated(regionalIpca,  available) : null;
-  const natAcc  = accumulated(nationalIpca, available);
-  const diff    = regAcc !== null ? regAcc - natAcc : null;
+  const { totalExpense, totalIncome, firstDate, lastDate } = getSummary(transactions);
+  const last = inflationData[inflationData.length - 1];
+  const diff = last ? last.personalAccumulated - last.ipcaAccumulated : 0;
 
   function handleApply() {
-    if (draft) onSelect(draft);
+    if (draft) { onSelect(draft); setShowSelector(false); }
   }
 
   function handleRemove() {
-    setDraft('');
-    onSelect(null);
+    setDraft(''); onSelect(null); setShowSelector(true);
   }
 
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-xl font-bold" style={{ color: 'var(--text-1)' }}>Minha Cidade</h1>
-        <p className="text-sm mt-0.5" style={{ color: 'var(--text-2)' }}>
-          IPCA regional oficial do IBGE para a sua área de coleta
-        </p>
-      </div>
-
-      {/* Explicação */}
-      <div
-        className="rounded-2xl px-5 py-4 flex items-start gap-3"
-        style={{ background: 'rgba(139,92,246,0.07)', border: '1px solid rgba(139,92,246,0.18)' }}
-      >
-        <Info size={15} className="mt-0.5 shrink-0" style={{ color: '#A78BFA' }} />
-        <div className="text-sm space-y-1" style={{ color: 'var(--text-2)' }}>
-          <p>
-            O IBGE calcula o IPCA para <strong className="text-slate-200">13 áreas de coleta</strong> específicas no Brasil.
-            Ao selecionar a cidade mais próxima de você, o Dashboard passa a comparar sua inflação
-            pessoal com o <strong className="text-slate-200">IPCA regional oficial</strong> dessa área,
-            em vez do índice nacional agregado.
-          </p>
-          <p className="text-xs" style={{ color: 'var(--text-3)' }}>
-            Fonte: IBGE SIDRA — Tabela 7169, Variável 63 (variação mensal %)
+  /* ── Empty state ───────────────────────────────────────────── */
+  if (!selectedRegionCode) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-xl font-bold" style={{ color: 'var(--text-1)' }}>Minha Cidade</h1>
+          <p className="text-sm mt-0.5" style={{ color: 'var(--text-2)' }}>
+            Compare sua inflação com o IPCA regional oficial do IBGE
           </p>
         </div>
-      </div>
 
-      {/* Seletor */}
-      <div className="card p-5 space-y-4">
-        <p className="text-sm font-semibold" style={{ color: 'var(--text-1)' }}>
-          Selecione sua área de coleta
-        </p>
+        <div
+          className="rounded-2xl px-5 py-4 flex items-start gap-3"
+          style={{ background: 'rgba(139,92,246,0.07)', border: '1px solid rgba(139,92,246,0.18)' }}
+        >
+          <Info size={15} className="mt-0.5 shrink-0" style={{ color: '#A78BFA' }} />
+          <div className="text-sm space-y-1" style={{ color: 'var(--text-2)' }}>
+            <p>
+              O IBGE calcula o IPCA para <strong className="text-slate-200">13 áreas de coleta</strong> específicas.
+              Selecione a mais próxima de você para ver sua inflação pessoal comparada ao índice regional.
+            </p>
+            <p className="text-xs" style={{ color: 'var(--text-3)' }}>
+              Fonte: IBGE SIDRA — Tabela 7169, Variável 63 (variação mensal %)
+            </p>
+          </div>
+        </div>
 
-        <CustomSelect
-          value={draft}
-          onChange={setDraft}
-          placeholder="Escolha a cidade mais próxima…"
-          options={REGIONS.map((r) => ({
-            value: r.ibgeCode,
-            label: r.label,
-            emoji: r.emoji,
-          }))}
-        />
-
-        <div className="flex gap-3">
+        <div className="card p-5 space-y-4">
+          <p className="text-sm font-semibold" style={{ color: 'var(--text-1)' }}>
+            Selecione sua área de coleta
+          </p>
+          <CustomSelect
+            value={draft}
+            onChange={setDraft}
+            placeholder="Escolha a cidade mais próxima…"
+            options={REGIONS.map((r) => ({ value: r.ibgeCode, label: r.label, emoji: r.emoji }))}
+          />
           <button
             onClick={handleApply}
-            disabled={!draft || draft === selectedRegionCode}
+            disabled={!draft}
             className="btn-primary flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            <CheckCircle2 size={15} />
-            Aplicar
+            <ArrowRight size={15} />
+            Ver meu IPCA regional
           </button>
-          {selectedRegionCode && (
-            <button onClick={handleRemove} className="btn-secondary flex items-center gap-2">
-              <XCircle size={15} />
-              Remover cidade
-            </button>
-          )}
         </div>
-
-        {selectedRegionCode && draft === selectedRegionCode && (
-          <div
-            className="flex items-center gap-2 text-xs px-3 py-2 rounded-lg"
-            style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', color: '#34D399' }}
-          >
-            <CheckCircle2 size={13} />
-            {region?.emoji} {region?.label} — IPCA regional ativo no Dashboard
-          </div>
-        )}
       </div>
+    );
+  }
 
-      {/* Comparativo nacional vs regional */}
-      {selectedRegionCode && (
-        <div className="card p-5">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <p className="text-sm font-semibold" style={{ color: 'var(--text-1)' }}>
-                IPCA Regional vs. Nacional — últimos 12 meses
-              </p>
-              <p className="text-xs mt-0.5" style={{ color: 'var(--text-3)' }}>
-                {region?.emoji} {region?.label} · Variação mensal (%)
-              </p>
-            </div>
+  /* ── Dashboard regional ────────────────────────────────────── */
+  return (
+    <div className="space-y-6">
+
+      {/* Header */}
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="flex items-center gap-2 mb-0.5">
+            <h1 className="text-xl font-bold" style={{ color: 'var(--text-1)' }}>Minha Cidade</h1>
             {regionalLoading && (
               <span
-                className="text-xs px-2 py-1 rounded-lg flex items-center gap-1.5"
+                className="flex items-center gap-1.5 text-xs px-2 py-0.5 rounded-lg"
                 style={{ background: 'rgba(139,92,246,0.1)', color: '#A78BFA' }}
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />
-                Carregando…
+                Atualizando…
               </span>
             )}
           </div>
+          <p className="text-sm" style={{ color: 'var(--text-2)' }}>
+            Sua inflação pessoal vs. {region?.emoji} {ipcaLabel}
+          </p>
+        </div>
+        <button
+          onClick={() => setShowSelector((v) => !v)}
+          className="btn-secondary flex items-center gap-2 shrink-0 text-xs"
+        >
+          <Settings2 size={13} />
+          {showSelector ? 'Fechar' : 'Trocar cidade'}
+        </button>
+      </div>
 
-          {/* Acumulado */}
-          {!regionalLoading && regAcc !== null && (
-            <div className="grid grid-cols-3 gap-3 mb-5">
-              <div
-                className="rounded-xl p-3 text-center"
-                style={{ background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.15)' }}
-              >
-                <p className="text-[10px] uppercase tracking-wide mb-1" style={{ color: 'var(--text-3)' }}>
-                  Regional (acum.)
-                </p>
-                <p className="text-lg font-bold" style={{ color: '#C4B5FD' }}>
-                  {formatPct(regAcc)}
-                </p>
-              </div>
-              <div
-                className="rounded-xl p-3 text-center"
-                style={{ background: 'rgba(6,182,212,0.08)', border: '1px solid rgba(6,182,212,0.15)' }}
-              >
-                <p className="text-[10px] uppercase tracking-wide mb-1" style={{ color: 'var(--text-3)' }}>
-                  Nacional (acum.)
-                </p>
-                <p className="text-lg font-bold" style={{ color: '#22D3EE' }}>
-                  {formatPct(natAcc)}
-                </p>
-              </div>
-              <div
-                className="rounded-xl p-3 text-center"
-                style={{
-                  background: diff! > 0 ? 'rgba(244,63,94,0.08)' : diff! < 0 ? 'rgba(16,185,129,0.08)' : 'rgba(255,255,255,0.04)',
-                  border: `1px solid ${diff! > 0 ? 'rgba(244,63,94,0.2)' : diff! < 0 ? 'rgba(16,185,129,0.2)' : 'rgba(255,255,255,0.08)'}`,
-                }}
-              >
-                <p className="text-[10px] uppercase tracking-wide mb-1" style={{ color: 'var(--text-3)' }}>
-                  Diferença
-                </p>
-                <div className="flex items-center justify-center gap-1">
-                  {diff! > 0
-                    ? <TrendingUp size={14} style={{ color: '#FB7185' }} />
-                    : diff! < 0
-                    ? <TrendingDown size={14} style={{ color: '#34D399' }} />
-                    : <Minus size={14} style={{ color: 'var(--text-3)' }} />}
-                  <p
-                    className="text-lg font-bold"
-                    style={{ color: diff! > 0 ? '#FB7185' : diff! < 0 ? '#34D399' : 'var(--text-2)' }}
-                  >
-                    {diff! > 0 ? '+' : ''}{formatPct(diff!)}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Tabela mês a mês */}
-          {!regionalLoading && (
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs">
-                <thead>
-                  <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                    <th className="text-left pb-2 font-semibold" style={{ color: 'var(--text-3)' }}>Mês</th>
-                    <th className="text-right pb-2 font-semibold" style={{ color: '#C4B5FD' }}>Regional</th>
-                    <th className="text-right pb-2 font-semibold" style={{ color: '#22D3EE' }}>Nacional</th>
-                    <th className="text-right pb-2 font-semibold" style={{ color: 'var(--text-3)' }}>Δ</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {months.map((m) => {
-                    const reg = regionalIpca[m];
-                    const nat = nationalIpca[m];
-                    const d = reg !== undefined && nat !== undefined ? reg - nat : null;
-                    return (
-                      <tr
-                        key={m}
-                        style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}
-                        className="transition-colors hover:bg-white/[0.02]"
-                      >
-                        <td className="py-2" style={{ color: 'var(--text-2)' }}>{monthLabel(m)}</td>
-                        <td className="py-2 text-right font-semibold" style={{ color: reg !== undefined ? '#C4B5FD' : 'var(--text-3)' }}>
-                          {reg !== undefined ? formatPct(reg) : '—'}
-                        </td>
-                        <td className="py-2 text-right font-semibold" style={{ color: nat !== undefined ? '#22D3EE' : 'var(--text-3)' }}>
-                          {nat !== undefined ? formatPct(nat) : '—'}
-                        </td>
-                        <td
-                          className="py-2 text-right font-semibold"
-                          style={{ color: d === null ? 'var(--text-3)' : d > 0 ? '#FB7185' : d < 0 ? '#34D399' : 'var(--text-2)' }}
-                        >
-                          {d !== null ? (d > 0 ? '+' : '') + formatPct(d) : '—'}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-
-          {regionalLoading && (
-            <div className="h-40 flex items-center justify-center" style={{ color: 'var(--text-3)' }}>
-              <p className="text-sm">Carregando dados regionais do IBGE…</p>
-            </div>
-          )}
+      {/* Seletor inline (collapsível) */}
+      {showSelector && (
+        <div
+          className="card p-4 flex flex-wrap items-end gap-3"
+          style={{ border: '1px solid rgba(139,92,246,0.25)' }}
+        >
+          <div className="flex-1 min-w-48">
+            <p className="label">Área de coleta</p>
+            <CustomSelect
+              value={draft}
+              onChange={setDraft}
+              options={REGIONS.map((r) => ({ value: r.ibgeCode, label: r.label, emoji: r.emoji }))}
+            />
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={handleApply}
+              disabled={!draft || draft === selectedRegionCode}
+              className="btn-primary flex items-center gap-1.5 text-xs disabled:opacity-40"
+            >
+              <CheckCircle2 size={13} /> Aplicar
+            </button>
+            <button onClick={handleRemove} className="btn-secondary flex items-center gap-1.5 text-xs">
+              <XCircle size={13} /> Remover
+            </button>
+          </div>
         </div>
       )}
 
-      {/* MapPin decorativo quando nenhuma cidade selecionada */}
-      {!selectedRegionCode && (
-        <div className="card p-14 text-center">
-          <div
-            className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
-            style={{ background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.2)' }}
-          >
-            <MapPin size={24} style={{ color: '#A78BFA' }} />
+      {/* KPI Cards */}
+      <SummaryCards
+        totalExpense={totalExpense}
+        totalIncome={totalIncome}
+        firstDate={firstDate}
+        lastDate={lastDate}
+        inflationData={inflationData}
+        ipcaLabel={ipcaLabel}
+      />
+
+      {/* Callout diff */}
+      {last && (
+        <div
+          className="rounded-2xl px-5 py-4 flex items-start gap-3"
+          style={{
+            background: diff > 0 ? 'rgba(244,63,94,0.08)' : diff < 0 ? 'rgba(16,185,129,0.08)' : 'rgba(255,255,255,0.04)',
+            border: `1px solid ${diff > 0 ? 'rgba(244,63,94,0.2)' : diff < 0 ? 'rgba(16,185,129,0.2)' : 'rgba(255,255,255,0.08)'}`,
+          }}
+        >
+          <Info
+            size={16}
+            className="mt-0.5 shrink-0"
+            style={{ color: diff > 0 ? '#FB7185' : diff < 0 ? '#34D399' : 'var(--text-3)' }}
+          />
+          <div>
+            <p className="text-sm font-semibold" style={{ color: 'var(--text-1)' }}>
+              {diff > 0
+                ? `Sua inflação está ${formatPct(Math.abs(diff))} acima do ${ipcaLabel} no período`
+                : diff < 0
+                ? `Sua inflação está ${formatPct(Math.abs(diff))} abaixo do ${ipcaLabel} no período`
+                : `Sua inflação está em linha com o ${ipcaLabel} no período`}
+            </p>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--text-2)' }}>
+              Minha inflação acumulada:{' '}
+              <span className="font-semibold text-slate-200">{formatPct(last.personalAccumulated)}</span>
+              {' '}·{' '}{ipcaLabel}:{' '}
+              <span className="font-semibold text-slate-200">{formatPct(last.ipcaAccumulated)}</span>
+            </p>
           </div>
-          <p className="font-semibold mb-1" style={{ color: 'var(--text-1)' }}>
-            Nenhuma cidade selecionada
+        </div>
+      )}
+
+      {/* Gráficos */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+        <div className="card p-5">
+          <p className="text-sm font-semibold mb-0.5" style={{ color: 'var(--text-1)' }}>
+            Inflação Acumulada no Período
           </p>
-          <p className="text-sm max-w-sm mx-auto" style={{ color: 'var(--text-3)' }}>
-            Selecione a área de coleta mais próxima de você para usar o IPCA regional no Dashboard.
+          <p className="text-xs mb-4" style={{ color: 'var(--text-3)' }}>
+            Variação acumulada mês a mês — Pessoal vs. {ipcaLabel}
+          </p>
+          <InflationAreaChart data={inflationData} ipcaLabel={ipcaLabel} />
+        </div>
+
+        <div className="card p-5">
+          <p className="text-sm font-semibold mb-0.5" style={{ color: 'var(--text-1)' }}>
+            Variação Mensal
+          </p>
+          <p className="text-xs mb-4" style={{ color: 'var(--text-3)' }}>
+            Inflação do mês — Pessoal vs. {ipcaLabel}
+          </p>
+          <MonthlyBarChart data={inflationData} ipcaLabel={ipcaLabel} />
+        </div>
+      </div>
+
+      {/* Composição da cesta */}
+      {categoryWeights.length > 0 && (
+        <div className="card p-5">
+          <p className="text-sm font-semibold mb-0.5" style={{ color: 'var(--text-1)' }}>
+            Composição da sua Cesta (mês-base)
+          </p>
+          <p className="text-xs mb-5" style={{ color: 'var(--text-3)' }}>
+            Peso de cada grupo IPCA no seu consumo — quanto você gasta em cada categoria
+          </p>
+          <div className="space-y-3">
+            {categoryWeights.map((cw) => (
+              <div key={cw.category} className="flex items-center gap-3">
+                <span className="text-base w-6 text-center">{cw.emoji}</span>
+                <span className="text-xs w-44 truncate" style={{ color: 'var(--text-2)' }}>
+                  {cw.label}
+                </span>
+                <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.07)' }}>
+                  <div
+                    className="h-full rounded-full transition-all duration-700"
+                    style={{ width: `${(cw.weight * 100).toFixed(1)}%`, background: cw.color }}
+                  />
+                </div>
+                <span className="text-xs font-semibold w-12 text-right" style={{ color: cw.color }}>
+                  {(cw.weight * 100).toFixed(1)}%
+                </span>
+                <span className="text-xs w-24 text-right hidden md:block" style={{ color: 'var(--text-3)' }}>
+                  {formatBRL(cw.baseSpend)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Sem transações */}
+      {transactions.length === 0 && (
+        <div className="card p-12 text-center">
+          <MapPin size={32} className="mx-auto mb-3" style={{ color: 'var(--text-3)' }} />
+          <p className="font-semibold mb-1" style={{ color: 'var(--text-1)' }}>
+            Nenhuma movimentação cadastrada
+          </p>
+          <p className="text-sm" style={{ color: 'var(--text-3)' }}>
+            Adicione gastos na aba <strong className="text-slate-400">Movimentações</strong> para ver os gráficos.
           </p>
         </div>
       )}
