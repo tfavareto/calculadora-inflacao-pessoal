@@ -75,7 +75,15 @@ export default function MyCity({
           </div>
         </div>
 
-        <div className="card p-5 space-y-4">
+        <div
+          className="p-5 rounded-2xl space-y-4"
+          style={{
+            background: 'rgba(255,255,255,0.04)',
+            border: '1px solid rgba(255,255,255,0.08)',
+            position: 'relative',
+            zIndex: 20,
+          }}
+        >
           <p className="text-sm font-semibold" style={{ color: 'var(--text-1)' }}>
             Selecione sua área de coleta
           </p>
@@ -130,11 +138,16 @@ export default function MyCity({
         </button>
       </div>
 
-      {/* Seletor inline (collapsível) */}
+      {/* Seletor inline (collapsível) — sem backdrop-blur para não criar stacking context */}
       {showSelector && (
         <div
-          className="card p-4 flex flex-wrap items-end gap-3"
-          style={{ border: '1px solid rgba(139,92,246,0.25)' }}
+          className="flex flex-wrap items-end gap-3 p-4 rounded-2xl"
+          style={{
+            background: 'rgba(255,255,255,0.04)',
+            border: '1px solid rgba(139,92,246,0.25)',
+            position: 'relative',
+            zIndex: 20,
+          }}
         >
           <div className="flex-1 min-w-48">
             <p className="label">Área de coleta</p>
