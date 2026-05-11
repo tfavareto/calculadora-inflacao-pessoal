@@ -1,0 +1,87 @@
+import { Transaction, IPCACategory } from './types';
+
+function tx(
+  date: string,
+  description: string,
+  category: IPCACategory,
+  type: 'expense' | 'income',
+  amount: number,
+): Transaction {
+  return { id: crypto.randomUUID(), date, description, category, type, amount };
+}
+
+export const DEMO_TRANSACTIONS: Transaction[] = [
+  // ── Janeiro 2024 (mês-base) ──
+  tx('2024-01-05', 'Supermercado Pão de Açúcar',    'alimentacao_bebidas', 'expense', 920),
+  tx('2024-01-12', 'Ifood — almoço e jantar',       'alimentacao_bebidas', 'expense', 380),
+  tx('2024-01-18', 'Supermercado Extra',             'alimentacao_bebidas', 'expense', 510),
+  tx('2024-01-03', 'Aluguel + condomínio',           'moradia',             'expense', 2800),
+  tx('2024-01-10', 'Conta de luz — Enel',            'moradia',             'expense', 210),
+  tx('2024-01-10', 'Conta de água',                  'moradia',             'expense', 95),
+  tx('2024-01-15', 'Gasolina Shell',                 'transportes',         'expense', 340),
+  tx('2024-01-20', 'Uber — semana',                  'transportes',         'expense', 180),
+  tx('2024-01-22', 'Manutenção do carro',            'transportes',         'expense', 280),
+  tx('2024-01-08', 'Plano de saúde Bradesco',        'saude_cuidados',      'expense', 480),
+  tx('2024-01-14', 'Farmácia',                        'saude_cuidados',      'expense', 130),
+  tx('2024-01-05', 'Mensalidade faculdade',           'educacao',            'expense', 1100),
+  tx('2024-01-08', 'Tim — plano celular',             'comunicacao',         'expense', 79),
+  tx('2024-01-08', 'Claro internet fibra',            'comunicacao',         'expense', 110),
+  tx('2024-01-25', 'Netflix + Spotify',              'despesas_pessoais',   'expense', 85),
+  tx('2024-01-28', 'Academia Smart Fit',             'despesas_pessoais',   'expense', 120),
+  tx('2024-01-31', 'Salário Janeiro',                'alimentacao_bebidas', 'income',  8500),
+
+  // ── Fevereiro 2024 ──
+  tx('2024-02-06', 'Supermercado Pão de Açúcar',    'alimentacao_bebidas', 'expense', 980),
+  tx('2024-02-14', 'Ifood — semana carnaval',       'alimentacao_bebidas', 'expense', 420),
+  tx('2024-02-20', 'Supermercado Extra',             'alimentacao_bebidas', 'expense', 550),
+  tx('2024-02-03', 'Aluguel + condomínio',           'moradia',             'expense', 2800),
+  tx('2024-02-10', 'Conta de luz — Enel',            'moradia',             'expense', 248),
+  tx('2024-02-10', 'Conta de água',                  'moradia',             'expense', 102),
+  tx('2024-02-12', 'Gasolina Shell',                 'transportes',         'expense', 360),
+  tx('2024-02-22', 'Uber — semana',                  'transportes',         'expense', 195),
+  tx('2024-02-08', 'Plano de saúde Bradesco',        'saude_cuidados',      'expense', 480),
+  tx('2024-02-16', 'Farmácia',                        'saude_cuidados',      'expense', 148),
+  tx('2024-02-05', 'Mensalidade faculdade',           'educacao',            'expense', 1100),
+  tx('2024-02-08', 'Tim — plano celular',             'comunicacao',         'expense', 79),
+  tx('2024-02-08', 'Claro internet fibra',            'comunicacao',         'expense', 110),
+  tx('2024-02-25', 'Netflix + Spotify',              'despesas_pessoais',   'expense', 90),
+  tx('2024-02-28', 'Academia Smart Fit',             'despesas_pessoais',   'expense', 120),
+  tx('2024-02-29', 'Salário Fevereiro',              'alimentacao_bebidas', 'income',  8500),
+
+  // ── Março 2024 ──
+  tx('2024-03-05', 'Supermercado Pão de Açúcar',    'alimentacao_bebidas', 'expense', 1040),
+  tx('2024-03-13', 'Ifood',                          'alimentacao_bebidas', 'expense', 390),
+  tx('2024-03-19', 'Supermercado Extra',             'alimentacao_bebidas', 'expense', 580),
+  tx('2024-03-03', 'Aluguel + condomínio',           'moradia',             'expense', 2800),
+  tx('2024-03-10', 'Conta de luz — Enel',            'moradia',             'expense', 225),
+  tx('2024-03-10', 'Conta de água',                  'moradia',             'expense', 98),
+  tx('2024-03-14', 'Gasolina Shell',                 'transportes',         'expense', 375),
+  tx('2024-03-21', 'Uber — semana',                  'transportes',         'expense', 210),
+  tx('2024-03-08', 'Plano de saúde Bradesco',        'saude_cuidados',      'expense', 505),
+  tx('2024-03-15', 'Farmácia',                        'saude_cuidados',      'expense', 125),
+  tx('2024-03-05', 'Mensalidade faculdade',           'educacao',            'expense', 1100),
+  tx('2024-03-08', 'Tim — plano celular',             'comunicacao',         'expense', 79),
+  tx('2024-03-08', 'Claro internet fibra',            'comunicacao',         'expense', 110),
+  tx('2024-03-25', 'Netflix + Spotify + Max',        'despesas_pessoais',   'expense', 105),
+  tx('2024-03-28', 'Academia Smart Fit',             'despesas_pessoais',   'expense', 120),
+  tx('2024-03-31', 'Salário Março',                  'alimentacao_bebidas', 'income',  8700),
+
+  // ── Abril 2024 ──
+  tx('2024-04-04', 'Supermercado Pão de Açúcar',    'alimentacao_bebidas', 'expense', 1080),
+  tx('2024-04-11', 'Ifood',                          'alimentacao_bebidas', 'expense', 410),
+  tx('2024-04-17', 'Supermercado Extra',             'alimentacao_bebidas', 'expense', 610),
+  tx('2024-04-03', 'Aluguel + condomínio',           'moradia',             'expense', 2940),
+  tx('2024-04-10', 'Conta de luz — Enel',            'moradia',             'expense', 235),
+  tx('2024-04-10', 'Conta de água',                  'moradia',             'expense', 105),
+  tx('2024-04-15', 'Gasolina Shell',                 'transportes',         'expense', 390),
+  tx('2024-04-22', 'Uber — semana',                  'transportes',         'expense', 200),
+  tx('2024-04-08', 'Plano de saúde Bradesco',        'saude_cuidados',      'expense', 505),
+  tx('2024-04-18', 'Farmácia — reforço',             'saude_cuidados',      'expense', 160),
+  tx('2024-04-05', 'Mensalidade faculdade',           'educacao',            'expense', 1100),
+  tx('2024-04-08', 'Tim — plano celular',             'comunicacao',         'expense', 79),
+  tx('2024-04-08', 'Claro internet fibra',            'comunicacao',         'expense', 110),
+  tx('2024-04-22', 'Camisa e calça jeans',           'vestuario',           'expense', 280),
+  tx('2024-04-25', 'Netflix + Spotify + Max',        'despesas_pessoais',   'expense', 105),
+  tx('2024-04-28', 'Academia Smart Fit',             'despesas_pessoais',   'expense', 120),
+  tx('2024-04-30', 'Salário Abril',                  'alimentacao_bebidas', 'income',  8700),
+];

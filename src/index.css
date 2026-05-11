@@ -1,0 +1,127 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg-page:    #07050F;
+    --bg-sidebar: #0C0A1A;
+    --bg-card:    rgba(255, 255, 255, 0.04);
+    --border:     rgba(255, 255, 255, 0.08);
+    --border-strong: rgba(255, 255, 255, 0.14);
+    --text-1: #EEEAF8;
+    --text-2: #9490A8;
+    --text-3: #5C5875;
+    --accent: #8B5CF6;
+    --accent-dim: rgba(139, 92, 246, 0.15);
+  }
+
+  * { @apply box-border; }
+
+  body {
+    background-color: var(--bg-page);
+    color: var(--text-1);
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Subtle radial highlight at top */
+  body::before {
+    content: '';
+    position: fixed;
+    top: -200px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 800px;
+    height: 400px;
+    background: radial-gradient(ellipse at 50% 0%, rgba(124, 58, 237, 0.12) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+}
+
+@layer components {
+  /* ── Cards ─────────────────────────────────────────────── */
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    @apply rounded-2xl backdrop-blur-sm transition-colors duration-200;
+  }
+  .card:hover {
+    border-color: var(--border-strong);
+  }
+
+  /* ── Buttons ────────────────────────────────────────────── */
+  .btn-primary {
+    background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
+    @apply text-white font-medium px-4 py-2 rounded-xl
+           transition-all duration-150 active:scale-95
+           hover:opacity-90 shadow-glow-sm;
+  }
+
+  .btn-secondary {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid var(--border);
+    @apply text-slate-300 font-medium px-4 py-2 rounded-xl
+           transition-all duration-150 active:scale-95
+           hover:bg-white/10;
+  }
+
+  .btn-ghost {
+    @apply text-slate-400 hover:text-slate-200 hover:bg-white/8
+           px-3 py-1.5 rounded-lg transition-all duration-150;
+  }
+
+  /* ── Inputs ─────────────────────────────────────────────── */
+  .input {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--border);
+    @apply w-full rounded-xl px-3 py-2.5 text-sm text-slate-100
+           placeholder:text-slate-500
+           focus:outline-none focus:ring-2 focus:ring-violet-500/25
+           focus:border-violet-500/40
+           transition-all duration-150;
+  }
+
+  .label {
+    @apply text-xs font-semibold uppercase tracking-wider mb-1.5 block;
+    color: var(--text-2);
+  }
+
+  /* ── Sidebar nav links ──────────────────────────────────── */
+  .sidebar-link {
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-xl
+           transition-all duration-150 cursor-pointer text-sm font-medium;
+    color: var(--text-3);
+  }
+  .sidebar-link:hover {
+    background: rgba(255,255,255,0.07);
+    color: var(--text-1);
+  }
+  .sidebar-link.active {
+    background: rgba(139, 92, 246, 0.18);
+    border: 1px solid rgba(139, 92, 246, 0.25);
+    color: #C4B5FD;
+  }
+
+  /* ── Badge chips ────────────────────────────────────────── */
+  .chip {
+    @apply text-xs font-semibold px-2 py-0.5 rounded-md;
+  }
+  .chip-violet { background: rgba(139,92,246,0.15); color: #C4B5FD; }
+  .chip-emerald { background: rgba(16,185,129,0.15); color: #34D399; }
+  .chip-rose { background: rgba(244,63,94,0.15); color: #FB7185; }
+  .chip-cyan { background: rgba(6,182,212,0.15); color: #22D3EE; }
+  .chip-amber { background: rgba(245,158,11,0.15); color: #FCD34D; }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+/* Recharts */
+.recharts-tooltip-wrapper { outline: none !important; }
+.recharts-surface { overflow: visible; }
