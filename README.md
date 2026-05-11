@@ -126,6 +126,15 @@ src/
 
 ---
 
+## Autor
+
+**Thiago Favareto**
+
+- GitHub: [@tfavareto](https://github.com/tfavareto)
+- E-mail: [thiagofavareto9@gmail.com](mailto:thiagofavareto9@gmail.com)
+
+---
+
 ## Licença
 
 MIT
