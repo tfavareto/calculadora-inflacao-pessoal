@@ -14,6 +14,7 @@ interface Props {
   inflationData: InflationPoint[];
   categoryWeights: CategoryWeight[];
   selectedRegionCode: string | null;
+  hasRegionalData: boolean;
   regionalLoading: boolean;
   onSelect: (ibgeCode: string | null) => void;
 }
@@ -23,6 +24,7 @@ export default function MyCity({
   inflationData,
   categoryWeights,
   selectedRegionCode,
+  hasRegionalData,
   regionalLoading,
   onSelect,
 }: Props) {
@@ -30,7 +32,9 @@ export default function MyCity({
   const [draft, setDraft] = useState<string>(selectedRegionCode ?? '');
 
   const region = selectedRegionCode ? getRegion(selectedRegionCode) : null;
-  const ipcaLabel = region ? `IPCA de ${region.city}` : 'IPCA Regional';
+  const ipcaLabel = hasRegionalData && region
+    ? `IPCA de ${region.city}`
+    : 'IPCA Nacional';
 
   const { totalExpense, totalIncome, firstDate, lastDate } = getSummary(transactions);
   const last = inflationData[inflationData.length - 1];
@@ -152,6 +156,19 @@ export default function MyCity({
               <XCircle size={13} /> Remover
             </button>
           </div>
+        </div>
+      )}
+
+      {/* Aviso quando sem dados regionais */}
+      {!regionalLoading && selectedRegionCode && !hasRegionalData && (
+        <div
+          className="rounded-2xl px-5 py-3 flex items-center gap-3"
+          style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)' }}
+        >
+          <Info size={14} className="shrink-0" style={{ color: '#FCD34D' }} />
+          <p className="text-xs" style={{ color: 'var(--text-2)' }}>
+            Dados regionais do IBGE indisponíveis para {region?.city}. Exibindo IPCA nacional como referência.
+          </p>
         </div>
       )}
 

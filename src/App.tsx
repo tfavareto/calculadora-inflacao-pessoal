@@ -24,10 +24,9 @@ export default function App() {
   const [regionalIpca, setRegionalIpca] = useState<Record<string, number>>({});
   const [regionalLoading, setRegionalLoading] = useState(false);
 
-  // IPCA ativo: regional se cidade selecionada, nacional caso contrário
-  const activeIpca = selectedRegionCode && Object.keys(regionalIpca).length > 0
-    ? regionalIpca
-    : nationalIpca;
+  // IPCA ativo: regional se cidade selecionada E dados carregados, nacional caso contrário
+  const hasRegionalData = selectedRegionCode !== null && Object.keys(regionalIpca).length > 0;
+  const activeIpca = hasRegionalData ? regionalIpca : nationalIpca;
 
   const [inflationData, setInflationData] = useState<InflationPoint[]>([]);
   const [categoryWeights, setCategoryWeights] = useState<CategoryWeight[]>([]);
@@ -103,6 +102,7 @@ export default function App() {
           inflationData={inflationData}
           categoryWeights={categoryWeights}
           selectedRegionCode={selectedRegionCode}
+          hasRegionalData={hasRegionalData}
           onSelect={handleSelectRegion}
           regionalLoading={regionalLoading}
         />
