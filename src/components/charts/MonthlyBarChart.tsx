@@ -8,12 +8,21 @@ import { formatPct } from '../../formatters';
 
 interface Props { data: InflationPoint[]; ipcaLabel?: string }
 
-const makeSeries = (ipcaLabel: string) => [
-  { key: 'personalMonthly', label: 'Minha Inflação', colorPos: '#8B5CF6', colorNeg: '#C4B5FD' },
-  { key: 'ipcaMonthly',     label: ipcaLabel,        colorPos: '#06B6D4', colorNeg: '#67E8F9' },
-] as const;
+type SeriesKey = 'personalMonthly' | 'ipcaMonthly';
 
-type SeriesKey = typeof SERIES[number]['key'];
+interface SeriesItem {
+  key: SeriesKey;
+  label: string;
+  colorPos: string;
+  colorNeg: string;
+}
+
+function buildSeries(ipcaLabel: string): SeriesItem[] {
+  return [
+    { key: 'personalMonthly', label: 'Minha Inflação', colorPos: '#8B5CF6', colorNeg: '#C4B5FD' },
+    { key: 'ipcaMonthly',     label: ipcaLabel,        colorPos: '#06B6D4', colorNeg: '#67E8F9' },
+  ];
+}
 
 function CustomTooltip({ active, payload, label, hidden }: {
   active?: boolean;
@@ -48,15 +57,17 @@ function CustomTooltip({ active, payload, label, hidden }: {
 }
 
 function CustomLegend({
+  series,
   hidden,
   onToggle,
 }: {
+  series: SeriesItem[];
   hidden: Set<SeriesKey>;
   onToggle: (key: SeriesKey) => void;
 }) {
   return (
     <div className="flex items-center justify-center gap-5 pt-4">
-      {SERIES.map((s) => {
+      {series.map((s) => {
         const isHidden = hidden.has(s.key);
         return (
           <button
@@ -89,7 +100,7 @@ function CustomLegend({
 }
 
 export default function MonthlyBarChart({ data, ipcaLabel = 'IPCA Oficial' }: Props) {
-  const SERIES = makeSeries(ipcaLabel);
+  const series = buildSeries(ipcaLabel);
   const chartData = data.slice(1);
   const [hidden, setHidden] = useState<Set<SeriesKey>>(new Set());
 
@@ -116,52 +127,23 @@ export default function MonthlyBarChart({ data, ipcaLabel = 'IPCA Oficial' }: Pr
       <ResponsiveContainer width="100%" height={265}>
         <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }} barGap={3}>
           <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-          <XAxis
-            dataKey="label"
-            tick={{ fontSize: 11, fill: 'var(--text-3)' }}
-            axisLine={false}
-            tickLine={false}
-          />
-          <YAxis
-            tickFormatter={(v) => `${v}%`}
-            tick={{ fontSize: 11, fill: 'var(--text-3)' }}
-            axisLine={false}
-            tickLine={false}
-            width={48}
-          />
-          <Tooltip
-            content={(props) => <CustomTooltip {...props} hidden={hidden} />}
-            cursor={{ fill: 'rgba(255,255,255,0.04)' }}
-          />
+          <XAxis dataKey="label" tick={{ fontSize: 11, fill: 'var(--text-3)' }} axisLine={false} tickLine={false} />
+          <YAxis tickFormatter={(v) => `${v}%`} tick={{ fontSize: 11, fill: 'var(--text-3)' }} axisLine={false} tickLine={false} width={48} />
+          <Tooltip content={(props) => <CustomTooltip {...props} hidden={hidden} />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
           <ReferenceLine y={0} stroke="rgba(255,255,255,0.08)" />
-
-          <Bar
-            dataKey="personalMonthly"
-            name="Minha Inflação"
-            radius={[4, 4, 0, 0]}
-            maxBarSize={40}
-            hide={hidden.has('personalMonthly')}
-          >
+          <Bar dataKey="personalMonthly" name="Minha Inflação" radius={[4, 4, 0, 0]} maxBarSize={40} hide={hidden.has('personalMonthly')}>
             {chartData.map((entry, i) => (
               <Cell key={i} fill={entry.personalMonthly >= 0 ? '#8B5CF6' : '#C4B5FD'} />
             ))}
           </Bar>
-
-          <Bar
-            dataKey="ipcaMonthly"
-            name={ipcaLabel}
-            radius={[4, 4, 0, 0]}
-            maxBarSize={40}
-            hide={hidden.has('ipcaMonthly')}
-          >
+          <Bar dataKey="ipcaMonthly" name={ipcaLabel} radius={[4, 4, 0, 0]} maxBarSize={40} hide={hidden.has('ipcaMonthly')}>
             {chartData.map((entry, i) => (
               <Cell key={i} fill={entry.ipcaMonthly >= 0 ? '#06B6D4' : '#67E8F9'} />
             ))}
           </Bar>
         </BarChart>
       </ResponsiveContainer>
-
-      <CustomLegend hidden={hidden} onToggle={toggleSeries} />
+      <CustomLegend series={series} hidden={hidden} onToggle={toggleSeries} />
     </div>
   );
 }

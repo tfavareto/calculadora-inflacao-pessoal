@@ -8,12 +8,22 @@ import { formatPct } from '../../formatters';
 
 interface Props { data: InflationPoint[]; ipcaLabel?: string }
 
-const makeSeries = (ipcaLabel: string) => [
-  { key: 'personalAccumulated', label: 'Minha Inflação', color: '#8B5CF6', grad: 'gradPersonal', dash: undefined },
-  { key: 'ipcaAccumulated',     label: ipcaLabel,        color: '#06B6D4', grad: 'gradIPCA',     dash: '5 3'    },
-] as const;
+type SeriesKey = 'personalAccumulated' | 'ipcaAccumulated';
 
-type SeriesKey = typeof SERIES[number]['key'];
+interface SeriesItem {
+  key: SeriesKey;
+  label: string;
+  color: string;
+  grad: string;
+  dash?: string;
+}
+
+function buildSeries(ipcaLabel: string): SeriesItem[] {
+  return [
+    { key: 'personalAccumulated', label: 'Minha Inflação', color: '#8B5CF6', grad: 'gradPersonal', dash: undefined },
+    { key: 'ipcaAccumulated',     label: ipcaLabel,        color: '#06B6D4', grad: 'gradIPCA',     dash: '5 3'    },
+  ];
+}
 
 function CustomTooltip({ active, payload, label, hidden }: {
   active?: boolean;
@@ -48,15 +58,17 @@ function CustomTooltip({ active, payload, label, hidden }: {
 }
 
 function CustomLegend({
+  series,
   hidden,
   onToggle,
 }: {
+  series: SeriesItem[];
   hidden: Set<SeriesKey>;
   onToggle: (key: SeriesKey) => void;
 }) {
   return (
     <div className="flex items-center justify-center gap-5 pt-4">
-      {SERIES.map((s) => {
+      {series.map((s) => {
         const isHidden = hidden.has(s.key);
         return (
           <button
@@ -71,26 +83,18 @@ function CustomLegend({
             }}
             title={isHidden ? `Exibir ${s.label}` : `Ocultar ${s.label}`}
           >
-            {/* linha com traço ou sólida conforme a série */}
             <svg width="16" height="10" className="shrink-0">
               {s.dash ? (
-                <line
-                  x1="0" y1="5" x2="16" y2="5"
+                <line x1="0" y1="5" x2="16" y2="5"
                   stroke={isHidden ? 'rgba(255,255,255,0.2)' : s.color}
-                  strokeWidth="2"
-                  strokeDasharray={s.dash}
-                />
+                  strokeWidth="2" strokeDasharray={s.dash} />
               ) : (
-                <line
-                  x1="0" y1="5" x2="16" y2="5"
+                <line x1="0" y1="5" x2="16" y2="5"
                   stroke={isHidden ? 'rgba(255,255,255,0.2)' : s.color}
-                  strokeWidth="2"
-                />
+                  strokeWidth="2" />
               )}
-              <circle
-                cx="8" cy="5" r="3"
-                fill={isHidden ? 'rgba(255,255,255,0.2)' : s.color}
-              />
+              <circle cx="8" cy="5" r="3"
+                fill={isHidden ? 'rgba(255,255,255,0.2)' : s.color} />
             </svg>
             <span
               className="text-xs font-medium select-none"
@@ -106,7 +110,7 @@ function CustomLegend({
 }
 
 export default function InflationAreaChart({ data, ipcaLabel = 'IPCA Oficial' }: Props) {
-  const SERIES = makeSeries(ipcaLabel);
+  const series = buildSeries(ipcaLabel);
   const [hidden, setHidden] = useState<Set<SeriesKey>>(new Set());
 
   function toggleSeries(key: SeriesKey) {
@@ -142,50 +146,21 @@ export default function InflationAreaChart({ data, ipcaLabel = 'IPCA Oficial' }:
             </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-          <XAxis
-            dataKey="label"
-            tick={{ fontSize: 11, fill: 'var(--text-3)' }}
-            axisLine={false}
-            tickLine={false}
-          />
-          <YAxis
-            tickFormatter={(v) => `${v}%`}
-            tick={{ fontSize: 11, fill: 'var(--text-3)' }}
-            axisLine={false}
-            tickLine={false}
-            width={48}
-          />
-          <Tooltip
-            content={(props) => <CustomTooltip {...props} hidden={hidden} />}
-          />
+          <XAxis dataKey="label" tick={{ fontSize: 11, fill: 'var(--text-3)' }} axisLine={false} tickLine={false} />
+          <YAxis tickFormatter={(v) => `${v}%`} tick={{ fontSize: 11, fill: 'var(--text-3)' }} axisLine={false} tickLine={false} width={48} />
+          <Tooltip content={(props) => <CustomTooltip {...props} hidden={hidden} />} />
           <ReferenceLine y={0} stroke="rgba(255,255,255,0.08)" />
-          <Area
-            type="monotone"
-            dataKey="personalAccumulated"
-            name="Minha Inflação"
-            stroke="#8B5CF6"
-            strokeWidth={2}
-            fill="url(#gradPersonal)"
-            dot={false}
-            activeDot={{ r: 4, fill: '#8B5CF6', strokeWidth: 0 }}
-            hide={hidden.has('personalAccumulated')}
-          />
-          <Area
-            type="monotone"
-            dataKey="ipcaAccumulated"
-            name={ipcaLabel}
-            stroke="#06B6D4"
-            strokeWidth={2}
-            fill="url(#gradIPCA)"
-            dot={false}
-            activeDot={{ r: 4, fill: '#06B6D4', strokeWidth: 0 }}
-            strokeDasharray="5 3"
-            hide={hidden.has('ipcaAccumulated')}
-          />
+          <Area type="monotone" dataKey="personalAccumulated" name="Minha Inflação"
+            stroke="#8B5CF6" strokeWidth={2} fill="url(#gradPersonal)"
+            dot={false} activeDot={{ r: 4, fill: '#8B5CF6', strokeWidth: 0 }}
+            hide={hidden.has('personalAccumulated')} />
+          <Area type="monotone" dataKey="ipcaAccumulated" name={ipcaLabel}
+            stroke="#06B6D4" strokeWidth={2} fill="url(#gradIPCA)"
+            dot={false} activeDot={{ r: 4, fill: '#06B6D4', strokeWidth: 0 }}
+            strokeDasharray="5 3" hide={hidden.has('ipcaAccumulated')} />
         </AreaChart>
       </ResponsiveContainer>
-
-      <CustomLegend hidden={hidden} onToggle={toggleSeries} />
+      <CustomLegend series={series} hidden={hidden} onToggle={toggleSeries} />
     </div>
   );
 }
