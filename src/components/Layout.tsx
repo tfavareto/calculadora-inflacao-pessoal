@@ -4,13 +4,14 @@ import { PageKey } from '../types';
 interface Props {
   current: PageKey;
   onChange: (p: PageKey) => void;
+  selectedRegionCode: string | null;
   children: React.ReactNode;
 }
 
-export default function Layout({ current, onChange, children }: Props) {
+export default function Layout({ current, onChange, selectedRegionCode, children }: Props) {
   return (
     <div className="min-h-screen flex">
-      <Sidebar current={current} onChange={onChange} />
+      <Sidebar current={current} onChange={onChange} selectedRegionCode={selectedRegionCode} />
       <main className="flex-1 ml-60 min-h-screen">
         <div className="max-w-6xl mx-auto px-6 py-8">
           {children}

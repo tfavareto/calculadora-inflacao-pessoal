@@ -1,18 +1,22 @@
-import { LayoutDashboard, ArrowLeftRight, BookOpen, TrendingUp, type LucideIcon } from 'lucide-react';
+import { LayoutDashboard, ArrowLeftRight, BookOpen, TrendingUp, MapPin, type LucideIcon } from 'lucide-react';
 import { PageKey } from '../types';
+import { getRegion } from '../regions';
 
 interface Props {
   current: PageKey;
   onChange: (p: PageKey) => void;
+  selectedRegionCode: string | null;
 }
 
 const LINKS: { key: PageKey; label: string; Icon: LucideIcon; desc: string }[] = [
-  { key: 'dashboard',    label: 'Dashboard',     desc: 'Visão geral',  Icon: LayoutDashboard },
-  { key: 'transactions', label: 'Movimentações', desc: 'Seus gastos',  Icon: ArrowLeftRight },
-  { key: 'methodology',  label: 'Metodologia',   desc: 'Como calculamos', Icon: BookOpen },
+  { key: 'dashboard',    label: 'Dashboard',     desc: 'Visão geral',        Icon: LayoutDashboard },
+  { key: 'transactions', label: 'Movimentações', desc: 'Seus gastos',        Icon: ArrowLeftRight  },
+  { key: 'mycity',       label: 'Minha Cidade',  desc: 'IPCA regional',      Icon: MapPin          },
+  { key: 'methodology',  label: 'Metodologia',   desc: 'Como calculamos',    Icon: BookOpen        },
 ];
 
-export default function Sidebar({ current, onChange }: Props) {
+export default function Sidebar({ current, onChange, selectedRegionCode }: Props) {
+  const region = selectedRegionCode ? getRegion(selectedRegionCode) : null;
   return (
     <aside
       className="fixed left-0 top-0 h-screen w-60 flex flex-col z-30"
@@ -62,11 +66,25 @@ export default function Sidebar({ current, onChange }: Props) {
       </nav>
 
       {/* Footer */}
-      <div className="px-5 py-4" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-        <div className="flex items-center gap-2">
-          <span
-            className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse-slow"
-          />
+      <div className="px-4 py-4 space-y-2" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+        {/* Cidade selecionada */}
+        {region && (
+          <button
+            onClick={() => onChange('mycity')}
+            className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg transition-colors"
+            style={{ background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.2)' }}
+          >
+            <span className="text-sm">{region.emoji}</span>
+            <div className="flex-1 text-left min-w-0">
+              <p className="text-[11px] font-semibold truncate" style={{ color: '#C4B5FD' }}>
+                {region.city}
+              </p>
+              <p className="text-[10px]" style={{ color: 'var(--text-3)' }}>IPCA regional ativo</p>
+            </div>
+          </button>
+        )}
+        <div className="flex items-center gap-2 px-1">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse-slow shrink-0" />
           <p className="text-[11px] font-medium" style={{ color: 'var(--text-3)' }}>
             IPCA via IBGE/SIDRA
           </p>

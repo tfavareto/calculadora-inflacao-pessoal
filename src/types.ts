@@ -38,4 +38,4 @@ export interface CategoryWeight {
   emoji: string;
 }
 
-export type PageKey = 'dashboard' | 'transactions' | 'methodology';
+export type PageKey = 'dashboard' | 'transactions' | 'methodology' | 'mycity';
