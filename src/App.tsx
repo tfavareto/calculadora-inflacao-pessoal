@@ -43,7 +43,7 @@ export default function App() {
   // Fetch IPCA nacional
   const refreshNationalIPCA = useCallback(async () => {
     setIpcaLoading(true);
-    const data = await fetchIPCARange('202201', '202512');
+    const data = await fetchIPCARange('202201', '202612');
     setNationalIpca(data);
     setIpcaLoading(false);
   }, []);
@@ -51,7 +51,7 @@ export default function App() {
   // Fetch IPCA regional
   const refreshRegionalIPCA = useCallback(async (code: string) => {
     setRegionalLoading(true);
-    const data = await fetchIPCARegional(code, '202201', '202512');
+    const data = await fetchIPCARegional(code, '202201', '202612');
     setRegionalIpca(data);
     setRegionalLoading(false);
   }, []);
