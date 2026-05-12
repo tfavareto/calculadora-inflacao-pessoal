@@ -91,7 +91,7 @@ export default function MyCity({
             value={draft}
             onChange={setDraft}
             placeholder="Escolha a cidade mais próxima…"
-            options={REGIONS.map((r) => ({ value: r.ibgeCode, label: r.label, emoji: r.emoji }))}
+            options={REGIONS.map((r) => ({ value: r.ibgeCode, label: r.label }))}
           />
           <button
             onClick={handleApply}
@@ -126,7 +126,7 @@ export default function MyCity({
             )}
           </div>
           <p className="text-sm" style={{ color: 'var(--text-2)' }}>
-            Sua inflação pessoal vs. {region?.emoji} {ipcaLabel}
+            Sua inflação pessoal vs. {ipcaLabel}
           </p>
         </div>
         <button
@@ -154,7 +154,7 @@ export default function MyCity({
             <CustomSelect
               value={draft}
               onChange={setDraft}
-              options={REGIONS.map((r) => ({ value: r.ibgeCode, label: r.label, emoji: r.emoji }))}
+              options={REGIONS.map((r) => ({ value: r.ibgeCode, label: r.label }))}
             />
           </div>
           <div className="flex gap-2">

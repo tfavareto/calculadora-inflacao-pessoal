@@ -75,7 +75,7 @@ export default function Sidebar({ current, onChange, selectedRegionCode }: Props
             className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg transition-colors"
             style={{ background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.2)' }}
           >
-            <span className="text-sm">{region.emoji}</span>
+            <MapPin size={13} className="shrink-0" style={{ color: '#C4B5FD' }} />
             <div className="flex-1 text-left min-w-0">
               <p className="text-[11px] font-semibold truncate" style={{ color: '#C4B5FD' }}>
                 {region.city}
