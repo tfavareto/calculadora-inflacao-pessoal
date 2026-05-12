@@ -128,6 +128,12 @@ export async function upsertRegional(
   }
 }
 
+/* ─── Verifica se a tabela regional precisa de seed ──────── */
+export async function isRegionalEmpty(): Promise<boolean> {
+  const { rows } = await pool.query('SELECT COUNT(*) FROM ipca_regional');
+  return parseInt(rows[0].count, 10) === 0;
+}
+
 export function getRegionList() {
   return REGIONS;
 }

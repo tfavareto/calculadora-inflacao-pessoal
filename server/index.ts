@@ -1,10 +1,11 @@
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { initDB } from './db.js';
+import { initDB, isRegionalEmpty } from './db.js';
 import transactionsRouter from './routes/transactions.js';
 import ipcaRouter from './routes/ipca.js';
 import { startScheduler } from './jobs/ipcaUpdater.js';
+import { refreshAllIPCA } from './services/ipcaRefresh.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -49,7 +50,6 @@ async function bootstrap() {
 ║  Depois clique em "Deploy" para reiniciar.                  ║
 ╚══════════════════════════════════════════════════════════════╝
     `.trim());
-    // Aguarda 10 s antes de sair para evitar loop de restart acelerado
     await new Promise((r) => setTimeout(r, 10_000));
     process.exit(1);
   }
@@ -70,6 +70,31 @@ async function bootstrap() {
   if (!dbReady) {
     console.error('[Server] ❌ Não foi possível conectar ao banco após 5 tentativas. Encerrando.');
     process.exit(1);
+  }
+
+  /* Seed inicial do IPCA regional ─────────────────────────
+   * A tabela ipca_national é populada pelo FALLBACK_IPCA no initDB.
+   * A tabela ipca_regional começa vazia — se estiver vazia, dispara
+   * um fetch completo em background (não bloqueia a subida do servidor).
+   * O cron das 05:00 e 23:00 BRT mantém os dados atualizados depois.
+   * ─────────────────────────────────────────────────────── */
+  try {
+    const needsSeed = await isRegionalEmpty();
+    if (needsSeed) {
+      console.log('[Server] IPCA regional vazio — iniciando fetch inicial do IBGE em background…');
+      setTimeout(() => {
+        refreshAllIPCA()
+          .then((r) => console.log(
+            `[Server] Seed inicial concluído — nacional: ${r.national}, ` +
+            `regional: ${Object.values(r.regional).reduce((a, b) => a + b, 0)} períodos.`,
+          ))
+          .catch((e) => console.error('[Server] Erro no seed inicial regional:', e));
+      }, 5_000); // aguarda 5 s para o servidor estar pronto antes de iniciar
+    } else {
+      console.log('[Server] IPCA regional já populado no banco.');
+    }
+  } catch (e) {
+    console.warn('[Server] Não foi possível verificar seed regional:', (e as Error).message);
   }
 
   startScheduler();
