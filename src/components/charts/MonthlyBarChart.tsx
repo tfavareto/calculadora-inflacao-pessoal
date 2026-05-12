@@ -19,7 +19,7 @@ interface SeriesItem {
 
 function buildSeries(ipcaLabel: string): SeriesItem[] {
   return [
-    { key: 'personalMonthly', label: 'Minha Inflação', colorPos: '#8B5CF6', colorNeg: '#C4B5FD' },
+    { key: 'personalMonthly', label: 'Minha Inflação', colorPos: '#F97316', colorNeg: '#FED7AA' },
     { key: 'ipcaMonthly',     label: ipcaLabel,        colorPos: '#06B6D4', colorNeg: '#67E8F9' },
   ];
 }
@@ -133,7 +133,7 @@ export default function MonthlyBarChart({ data, ipcaLabel = 'IPCA Oficial' }: Pr
           <ReferenceLine y={0} stroke="rgba(255,255,255,0.08)" />
           <Bar dataKey="personalMonthly" name="Minha Inflação" radius={[4, 4, 0, 0]} maxBarSize={40} hide={hidden.has('personalMonthly')}>
             {chartData.map((entry, i) => (
-              <Cell key={i} fill={entry.personalMonthly >= 0 ? '#8B5CF6' : '#C4B5FD'} />
+              <Cell key={i} fill={entry.personalMonthly >= 0 ? '#F97316' : '#FED7AA'} />
             ))}
           </Bar>
           <Bar dataKey="ipcaMonthly" name={ipcaLabel} radius={[4, 4, 0, 0]} maxBarSize={40} hide={hidden.has('ipcaMonthly')}>

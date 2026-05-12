@@ -102,8 +102,8 @@ export default function SummaryCards({
         value={personalAcc !== null ? formatPct(personalAcc) : '—'}
         sub={last ? `Mensal: ${formatPct(last.personalMonthly)}` : 'Insuficiente — 2+ meses'}
         Icon={TrendingUp}
-        iconBg="rgba(139, 92, 246, 0.15)"
-        iconColor="#A78BFA"
+        iconBg="rgba(249, 115, 22, 0.14)"
+        iconColor="#F97316"
         valueColor={personalAcc !== null && personalAcc > 0 ? '#FB7185' : personalAcc !== null && personalAcc < 0 ? '#34D399' : undefined}
         badge={
           diff !== null

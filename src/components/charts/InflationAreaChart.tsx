@@ -20,7 +20,7 @@ interface SeriesItem {
 
 function buildSeries(ipcaLabel: string): SeriesItem[] {
   return [
-    { key: 'personalAccumulated', label: 'Minha Inflação', color: '#8B5CF6', grad: 'gradPersonal', dash: undefined },
+    { key: 'personalAccumulated', label: 'Minha Inflação', color: '#F97316', grad: 'gradPersonal', dash: undefined },
     { key: 'ipcaAccumulated',     label: ipcaLabel,        color: '#06B6D4', grad: 'gradIPCA',     dash: '5 3'    },
   ];
 }
@@ -137,8 +137,8 @@ export default function InflationAreaChart({ data, ipcaLabel = 'IPCA Oficial' }:
         <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
           <defs>
             <linearGradient id="gradPersonal" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%"   stopColor="#8B5CF6" stopOpacity={0.3} />
-              <stop offset="100%" stopColor="#8B5CF6" stopOpacity={0} />
+              <stop offset="0%"   stopColor="#F97316" stopOpacity={0.28} />
+              <stop offset="100%" stopColor="#F97316" stopOpacity={0} />
             </linearGradient>
             <linearGradient id="gradIPCA" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%"   stopColor="#06B6D4" stopOpacity={0.2} />
@@ -151,8 +151,8 @@ export default function InflationAreaChart({ data, ipcaLabel = 'IPCA Oficial' }:
           <Tooltip content={(props) => <CustomTooltip {...props} hidden={hidden} />} />
           <ReferenceLine y={0} stroke="rgba(255,255,255,0.08)" />
           <Area type="monotone" dataKey="personalAccumulated" name="Minha Inflação"
-            stroke="#8B5CF6" strokeWidth={2} fill="url(#gradPersonal)"
-            dot={false} activeDot={{ r: 4, fill: '#8B5CF6', strokeWidth: 0 }}
+            stroke="#F97316" strokeWidth={2} fill="url(#gradPersonal)"
+            dot={false} activeDot={{ r: 4, fill: '#F97316', strokeWidth: 0 }}
             hide={hidden.has('personalAccumulated')} />
           <Area type="monotone" dataKey="ipcaAccumulated" name={ipcaLabel}
             stroke="#06B6D4" strokeWidth={2} fill="url(#gradIPCA)"

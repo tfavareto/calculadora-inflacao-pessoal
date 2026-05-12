@@ -59,8 +59,8 @@ function Callout({
     <div
       className="flex gap-3 rounded-xl px-4 py-3 text-sm"
       style={{
-        background: 'rgba(139,92,246,0.07)',
-        border: '1px solid rgba(139,92,246,0.15)',
+        background: 'rgba(249,115,22,0.07)',
+        border: '1px solid rgba(249,115,22,0.16)',
         color: 'var(--text-2)',
       }}
     >
@@ -103,7 +103,7 @@ export default function WhatIsInflation() {
       {/* 1 — O que é inflação? */}
       <SectionCard
         icon={<TrendingUp size={18} className="text-white" />}
-        iconBg="linear-gradient(135deg, #7c3aed, #4c1d95)"
+        iconBg="linear-gradient(135deg, #F97316, #EA580C)"
         title="1. O que é inflação?"
       >
         <p>

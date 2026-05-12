@@ -61,9 +61,9 @@ export default function MyCity({
 
         <div
           className="rounded-2xl px-5 py-4 flex items-start gap-3"
-          style={{ background: 'rgba(139,92,246,0.07)', border: '1px solid rgba(139,92,246,0.18)' }}
+          style={{ background: 'rgba(249,115,22,0.07)', border: '1px solid rgba(249,115,22,0.18)' }}
         >
-          <Info size={15} className="mt-0.5 shrink-0" style={{ color: '#A78BFA' }} />
+          <Info size={15} className="mt-0.5 shrink-0" style={{ color: '#F97316' }} />
           <div className="text-sm space-y-1" style={{ color: 'var(--text-2)' }}>
             <p>
               O IBGE calcula o IPCA para <strong className="text-slate-200">13 áreas de coleta</strong> específicas.
@@ -118,9 +118,9 @@ export default function MyCity({
             {regionalLoading && (
               <span
                 className="flex items-center gap-1.5 text-xs px-2 py-0.5 rounded-lg"
-                style={{ background: 'rgba(139,92,246,0.1)', color: '#A78BFA' }}
+                style={{ background: 'rgba(249,115,22,0.08)', color: '#FB923C' }}
               >
-                <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />
+                <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
                 Atualizando…
               </span>
             )}
@@ -144,7 +144,7 @@ export default function MyCity({
           className="flex flex-wrap items-end gap-3 p-4 rounded-2xl"
           style={{
             background: 'rgba(255,255,255,0.04)',
-            border: '1px solid rgba(139,92,246,0.25)',
+            border: '1px solid rgba(249,115,22,0.22)',
             position: 'relative',
             zIndex: 20,
           }}

@@ -32,9 +32,9 @@ export const CATEGORIES: Record<IPCACategory, CategoryConfig> = {
   artigos_residencia: {
     label: 'Artigos de Residência',
     officialWeight: 4.27,
-    color: '#8B5CF6',
-    bgColor: '#F5F3FF',
-    textColor: '#5B21B6',
+    color: '#818CF8',
+    bgColor: '#EEF2FF',
+    textColor: '#3730A3',
     emoji: '🛋️',
     description: 'Móveis, eletrodomésticos, utensílios e equipamentos domésticos',
   },

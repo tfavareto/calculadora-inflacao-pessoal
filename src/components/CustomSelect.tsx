@@ -44,8 +44,8 @@ export default function CustomSelect({ value, options, onChange, placeholder, cl
         className="flex items-center gap-2 w-full rounded-xl px-3 py-2.5 text-sm transition-all duration-150"
         style={{
           background: 'rgba(255,255,255,0.06)',
-          border: `1px solid ${open ? 'rgba(139,92,246,0.4)' : 'rgba(255,255,255,0.08)'}`,
-          boxShadow: open ? '0 0 0 3px rgba(139,92,246,0.1)' : 'none',
+          border: `1px solid ${open ? 'rgba(249,115,22,0.45)' : 'rgba(255,255,255,0.08)'}`,
+          boxShadow: open ? '0 0 0 3px rgba(249,115,22,0.10)' : 'none',
           color: selected ? 'var(--text-1)' : 'var(--text-3)',
           minWidth: 0,
         }}
@@ -95,9 +95,9 @@ export default function CustomSelect({ value, options, onChange, placeholder, cl
                     className="flex items-center gap-2.5 w-full px-3 py-2 text-sm transition-colors duration-100"
                     style={{
                       background: isSelected
-                        ? 'rgba(139,92,246,0.15)'
+                        ? 'rgba(249,115,22,0.14)'
                         : 'transparent',
-                      color: isSelected ? '#C4B5FD' : 'var(--text-2)',
+                      color: isSelected ? '#FB923C' : 'var(--text-2)',
                     }}
                     onMouseEnter={(e) => {
                       if (!isSelected) e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
@@ -117,7 +117,7 @@ export default function CustomSelect({ value, options, onChange, placeholder, cl
                     )}
                     <span className="flex-1 text-left truncate">{opt.label}</span>
                     {isSelected && (
-                      <Check size={13} className="shrink-0" style={{ color: '#A78BFA' }} />
+                      <Check size={13} className="shrink-0" style={{ color: '#F97316' }} />
                     )}
                   </button>
                 </li>

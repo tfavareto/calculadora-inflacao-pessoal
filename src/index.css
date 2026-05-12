@@ -4,16 +4,16 @@
 
 @layer base {
   :root {
-    --bg-page:    #07050F;
-    --bg-sidebar: #0C0A1A;
-    --bg-card:    rgba(255, 255, 255, 0.04);
-    --border:     rgba(255, 255, 255, 0.08);
-    --border-strong: rgba(255, 255, 255, 0.14);
-    --text-1: #EEEAF8;
-    --text-2: #9490A8;
-    --text-3: #5C5875;
-    --accent: #8B5CF6;
-    --accent-dim: rgba(139, 92, 246, 0.15);
+    --bg-page:       #080808;
+    --bg-sidebar:    #0F0F0F;
+    --bg-card:       rgba(255, 255, 255, 0.03);
+    --border:        rgba(255, 255, 255, 0.07);
+    --border-strong: rgba(255, 255, 255, 0.12);
+    --text-1: #F2EDE6;
+    --text-2: #8A8480;
+    --text-3: #524E4A;
+    --accent: #F97316;
+    --accent-dim: rgba(249, 115, 22, 0.12);
   }
 
   * { @apply box-border; }
@@ -35,7 +35,7 @@
     transform: translateX(-50%);
     width: 800px;
     height: 400px;
-    background: radial-gradient(ellipse at 50% 0%, rgba(124, 58, 237, 0.12) 0%, transparent 70%);
+    background: radial-gradient(ellipse at 50% 0%, rgba(249, 115, 22, 0.07) 0%, transparent 70%);
     pointer-events: none;
     z-index: 0;
   }
@@ -54,14 +54,14 @@
 
   /* ── Buttons ────────────────────────────────────────────── */
   .btn-primary {
-    background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
+    background: linear-gradient(135deg, #F97316 0%, #EA580C 100%);
     @apply text-white font-medium px-4 py-2 rounded-xl
            transition-all duration-150 active:scale-95
            hover:opacity-90 shadow-glow-sm;
   }
 
   .btn-secondary {
-    background: rgba(255,255,255,0.07);
+    background: rgba(255,255,255,0.06);
     border: 1px solid var(--border);
     @apply text-slate-300 font-medium px-4 py-2 rounded-xl
            transition-all duration-150 active:scale-95
@@ -75,12 +75,12 @@
 
   /* ── Inputs ─────────────────────────────────────────────── */
   .input {
-    background: rgba(255,255,255,0.06);
+    background: rgba(255,255,255,0.05);
     border: 1px solid var(--border);
     @apply w-full rounded-xl px-3 py-2.5 text-sm text-slate-100
            placeholder:text-slate-500
-           focus:outline-none focus:ring-2 focus:ring-violet-500/25
-           focus:border-violet-500/40
+           focus:outline-none focus:ring-2 focus:ring-orange-500/25
+           focus:border-orange-500/40
            transition-all duration-150;
   }
 
@@ -96,31 +96,31 @@
     color: var(--text-3);
   }
   .sidebar-link:hover {
-    background: rgba(255,255,255,0.07);
+    background: rgba(255,255,255,0.06);
     color: var(--text-1);
   }
   .sidebar-link.active {
-    background: rgba(139, 92, 246, 0.18);
-    border: 1px solid rgba(139, 92, 246, 0.25);
-    color: #C4B5FD;
+    background: rgba(249, 115, 22, 0.14);
+    border: 1px solid rgba(249, 115, 22, 0.28);
+    color: #FB923C;
   }
 
   /* ── Badge chips ────────────────────────────────────────── */
   .chip {
     @apply text-xs font-semibold px-2 py-0.5 rounded-md;
   }
-  .chip-violet { background: rgba(139,92,246,0.15); color: #C4B5FD; }
-  .chip-emerald { background: rgba(16,185,129,0.15); color: #34D399; }
-  .chip-rose { background: rgba(244,63,94,0.15); color: #FB7185; }
-  .chip-cyan { background: rgba(6,182,212,0.15); color: #22D3EE; }
-  .chip-amber { background: rgba(245,158,11,0.15); color: #FCD34D; }
+  .chip-orange  { background: rgba(249,115,22,0.15);  color: #FB923C; }
+  .chip-emerald { background: rgba(16,185,129,0.15);  color: #34D399; }
+  .chip-rose    { background: rgba(244,63,94,0.15);   color: #FB7185; }
+  .chip-cyan    { background: rgba(6,182,212,0.15);   color: #22D3EE; }
+  .chip-amber   { background: rgba(245,158,11,0.15);  color: #FCD34D; }
 }
 
 /* Scrollbar */
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 999px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.16); }
 
 /* Recharts */
 .recharts-tooltip-wrapper { outline: none !important; }

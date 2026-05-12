@@ -48,7 +48,7 @@ export default function Dashboard({
             onClick={onGoToMyCity}
             className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-colors"
             style={region
-              ? { background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.25)', color: '#C4B5FD' }
+              ? { background: 'rgba(249,115,22,0.10)', border: '1px solid rgba(249,115,22,0.25)', color: '#FB923C' }
               : { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'var(--text-3)' }
             }
             title="Ver comparativo com IPCA regional"
@@ -59,12 +59,12 @@ export default function Dashboard({
             <div
               className="flex items-center gap-2 text-xs px-3 py-1.5 rounded-lg"
               style={{
-                background: 'rgba(139,92,246,0.1)',
-                border: '1px solid rgba(139,92,246,0.2)',
-                color: '#A78BFA',
+                background: 'rgba(249,115,22,0.08)',
+                border: '1px solid rgba(249,115,22,0.20)',
+                color: '#FB923C',
               }}
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />
+              <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
               Atualizando IPCA...
             </div>
           )}
@@ -174,7 +174,7 @@ export default function Dashboard({
         <div className="card p-14 text-center">
           <div
             className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5"
-            style={{ background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.2)' }}
+            style={{ background: 'rgba(249,115,22,0.10)', border: '1px solid rgba(249,115,22,0.20)' }}
           >
             <span className="text-3xl">📊</span>
           </div>

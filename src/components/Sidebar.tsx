@@ -28,7 +28,7 @@ export default function Sidebar({ current, onChange, selectedRegionCode }: Props
         <div className="flex items-center gap-3">
           <div
             className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-            style={{ background: 'linear-gradient(135deg, #1B3D6F, #00CC96)' }}
+            style={{ background: 'linear-gradient(135deg, #7C2D00, #F97316)' }}
           >
             <TrendingUp size={17} className="text-white" />
           </div>
@@ -73,11 +73,11 @@ export default function Sidebar({ current, onChange, selectedRegionCode }: Props
           <button
             onClick={() => onChange('mycity')}
             className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg transition-colors"
-            style={{ background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.2)' }}
+            style={{ background: 'rgba(249,115,22,0.10)', border: '1px solid rgba(249,115,22,0.22)' }}
           >
-            <MapPin size={13} className="shrink-0" style={{ color: '#C4B5FD' }} />
+            <MapPin size={13} className="shrink-0" style={{ color: '#F97316' }} />
             <div className="flex-1 text-left min-w-0">
-              <p className="text-[11px] font-semibold truncate" style={{ color: '#C4B5FD' }}>
+              <p className="text-[11px] font-semibold truncate" style={{ color: '#FB923C' }}>
                 {region.city}
               </p>
               <p className="text-[10px]" style={{ color: 'var(--text-3)' }}>IPCA regional ativo</p>

@@ -7,7 +7,7 @@ function Step({ n, title, children }: { n: number; title: string; children: Reac
       <div className="flex flex-col items-center">
         <div
           className="w-8 h-8 rounded-full text-sm font-bold flex items-center justify-center shrink-0 text-white"
-          style={{ background: 'linear-gradient(135deg, #7c3aed, #5b21b6)' }}
+          style={{ background: 'linear-gradient(135deg, #F97316, #EA580C)' }}
         >
           {n}
         </div>
@@ -28,9 +28,9 @@ function Formula({ children }: { children: React.ReactNode }) {
     <div
       className="rounded-xl px-4 py-3 font-mono text-sm my-3 overflow-x-auto"
       style={{
-        background: 'rgba(139,92,246,0.08)',
-        border: '1px solid rgba(139,92,246,0.18)',
-        color: '#C4B5FD',
+        background: 'rgba(249,115,22,0.08)',
+        border: '1px solid rgba(249,115,22,0.18)',
+        color: '#FB923C',
       }}
     >
       {children}
