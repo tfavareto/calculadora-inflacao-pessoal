@@ -1,34 +1,29 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
-  <defs>
-    <linearGradient id="g" x1="0" y1="1" x2="1" y2="0" gradientUnits="objectBoundingBox">
-      <stop offset="0%"   stop-color="#7C2D00"/>
-      <stop offset="100%" stop-color="#F97316"/>
-    </linearGradient>
-  </defs>
 
-  <!-- Moldura arredondada (frame do gráfico) -->
-  <rect x="5" y="14" width="68" height="78" rx="16" ry="16"
-        stroke="url(#g)" stroke-width="7" fill="none"/>
+  <!-- Moldura arredondada preta (igual à logo) -->
+  <rect x="5" y="8" width="68" height="68" rx="18" ry="18"
+        stroke="#111111" stroke-width="9" fill="none"/>
 
-  <!-- Barra 1 — mais curta -->
-  <rect x="14" y="63" width="13" height="21" rx="3" fill="url(#g)"/>
+  <!-- Barra 1 — baixa -->
+  <rect x="13" y="57" width="13" height="13" rx="3" fill="#F97316"/>
 
   <!-- Barra 2 — média -->
-  <rect x="32" y="52" width="13" height="32" rx="3" fill="url(#g)"/>
+  <rect x="30" y="47" width="13" height="23" rx="3" fill="#F97316"/>
 
-  <!-- Barra 3 — mais alta -->
-  <rect x="50" y="40" width="13" height="44" rx="3" fill="url(#g)"/>
+  <!-- Barra 3 — alta -->
+  <rect x="47" y="37" width="13" height="33" rx="3" fill="#F97316"/>
 
-  <!-- Linha de tendência + seta (sai pela moldura para cima-direita) -->
+  <!-- Linha de tendência diagonal laranja -->
   <polyline
-    points="20,63 38,52 56,40 86,8"
-    stroke="url(#g)" stroke-width="7"
+    points="16,62 34,50 52,39 88,6"
+    stroke="#F97316" stroke-width="8"
     stroke-linecap="round" stroke-linejoin="round"/>
 
   <!-- Cabeça da seta -->
   <polyline
-    points="72,5 87,8 84,23"
-    stroke="url(#g)" stroke-width="7"
+    points="74,2 89,6 85,21"
+    stroke="#F97316" stroke-width="8"
     stroke-linecap="round" stroke-linejoin="round"
     fill="none"/>
+
 </svg>

@@ -1,4 +1,4 @@
-import { LayoutDashboard, ArrowLeftRight, BookOpen, TrendingUp, MapPin, HelpCircle, type LucideIcon } from 'lucide-react';
+import { LayoutDashboard, ArrowLeftRight, BookOpen, MapPin, HelpCircle, type LucideIcon } from 'lucide-react';
 import { PageKey } from '../types';
 import { getRegion } from '../regions';
 
@@ -26,12 +26,21 @@ export default function Sidebar({ current, onChange, selectedRegionCode }: Props
       {/* Logo */}
       <div className="px-5 pt-6 pb-5" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
         <div className="flex items-center gap-3">
-          <div
-            className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-            style={{ background: 'linear-gradient(135deg, #7C2D00, #F97316)' }}
-          >
-            <TrendingUp size={17} className="text-white" />
-          </div>
+          {/* Mini logo fiel à marca: moldura preta + barras/seta laranja */}
+          <svg width="36" height="36" viewBox="0 0 100 100" fill="none" className="shrink-0">
+            <rect x="5" y="8" width="68" height="68" rx="18" ry="18"
+                  stroke="#FFFFFF" strokeWidth="9" fill="none"/>
+            <rect x="13" y="57" width="13" height="13" rx="3" fill="#F97316"/>
+            <rect x="30" y="47" width="13" height="23" rx="3" fill="#F97316"/>
+            <rect x="47" y="37" width="13" height="33" rx="3" fill="#F97316"/>
+            <polyline points="16,62 34,50 52,39 88,6"
+                      stroke="#F97316" strokeWidth="8"
+                      strokeLinecap="round" strokeLinejoin="round"/>
+            <polyline points="74,2 89,6 85,21"
+                      stroke="#F97316" strokeWidth="8"
+                      strokeLinecap="round" strokeLinejoin="round"
+                      fill="none"/>
+          </svg>
           <div>
             <p className="text-white font-semibold text-sm leading-tight tracking-tight">
               Meu IPCA
