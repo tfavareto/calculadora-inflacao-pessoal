@@ -5,20 +5,29 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:server": "tsx watch server/index.ts",
     "build": "vite build",
     "preview": "vite preview",
-    "start": "npx serve dist -l $PORT"
+    "start": "tsx server/index.ts"
   },
   "dependencies": {
+    "express": "^4.21.2",
     "lucide-react": "^0.468.0",
+    "node-cron": "^3.0.3",
+    "pg": "^8.13.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "recharts": "^2.13.3"
+    "recharts": "^2.13.3",
+    "tsx": "^4.19.2"
   },
   "engines": {
     "node": ">=20"
   },
   "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.17.9",
+    "@types/node-cron": "^3.0.11",
+    "@types/pg": "^8.11.10",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
     "@vitejs/plugin-react": "^4.3.4",

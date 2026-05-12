@@ -3,13 +3,12 @@ import { PlusCircle, Sparkles, Trash2 } from 'lucide-react';
 import { Transaction } from '../types';
 import TransactionForm from '../components/TransactionForm';
 import TransactionList from '../components/TransactionList';
-import { DEMO_TRANSACTIONS } from '../demoData';
 
 interface Props {
   transactions: Transaction[];
   onAdd: (t: Transaction) => void;
   onDelete: (id: string) => void;
-  onLoadDemo: (ts: Transaction[]) => void;
+  onLoadDemo: () => void;
   onClear: () => void;
 }
 
@@ -42,7 +41,7 @@ export default function Transactions({ transactions, onAdd, onDelete, onLoadDemo
         <div className="flex items-center gap-2 shrink-0">
           {transactions.length === 0 ? (
             <button
-              onClick={() => onLoadDemo(DEMO_TRANSACTIONS)}
+              onClick={onLoadDemo}
               className="btn-secondary flex items-center gap-2 text-sm"
             >
               <Sparkles size={14} />

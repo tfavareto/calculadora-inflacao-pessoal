@@ -1,10 +1,18 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Transaction, InflationPoint, CategoryWeight, PageKey } from './types';
-import { loadTransactions, saveTransactions, loadRegion, saveRegion } from './storage';
+import { loadRegion, saveRegion } from './storage';
 import { calculateInflation, getCategoryWeights } from './calculator';
-import { fetchIPCARange } from './ibgeApi';
-import { fetchIPCARegional } from './ibgeRegionalApi';
+import {
+  apiGetTransactions,
+  apiAddTransaction,
+  apiDeleteTransaction,
+  apiClearTransactions,
+  apiLoadDemo,
+  apiGetNationalIPCA,
+  apiGetRegionalIPCA,
+} from './api/client';
 import { FALLBACK_IPCA } from './constants';
+import { DEMO_TRANSACTIONS } from './demoData';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import Transactions from './pages/Transactions';
@@ -13,7 +21,8 @@ import MyCity from './pages/MyCity';
 
 export default function App() {
   const [page, setPage] = useState<PageKey>('dashboard');
-  const [transactions, setTransactions] = useState<Transaction[]>(() => loadTransactions());
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [txLoading, setTxLoading] = useState(true);
 
   // IPCA nacional
   const [nationalIpca, setNationalIpca] = useState<Record<string, number>>(FALLBACK_IPCA);
@@ -31,27 +40,33 @@ export default function App() {
   const [inflationData, setInflationData] = useState<InflationPoint[]>([]);
   const [categoryWeights, setCategoryWeights] = useState<CategoryWeight[]>([]);
 
-  // Persiste transações
-  useEffect(() => { saveTransactions(transactions); }, [transactions]);
-
   // Recalcula inflação quando dados mudam
   useEffect(() => {
     setInflationData(calculateInflation(transactions, activeIpca));
     setCategoryWeights(getCategoryWeights(transactions));
   }, [transactions, activeIpca]);
 
-  // Fetch IPCA nacional
+  // Carrega transações do backend na montagem
+  useEffect(() => {
+    setTxLoading(true);
+    apiGetTransactions()
+      .then(setTransactions)
+      .catch(() => setTransactions([]))
+      .finally(() => setTxLoading(false));
+  }, []);
+
+  // Fetch IPCA nacional do backend
   const refreshNationalIPCA = useCallback(async () => {
     setIpcaLoading(true);
-    const data = await fetchIPCARange('202201', '202612');
+    const data = await apiGetNationalIPCA('202201', '202612');
     setNationalIpca(data);
     setIpcaLoading(false);
   }, []);
 
-  // Fetch IPCA regional
+  // Fetch IPCA regional do backend
   const refreshRegionalIPCA = useCallback(async (code: string) => {
     setRegionalLoading(true);
-    const data = await fetchIPCARegional(code, '202201', '202612');
+    const data = await apiGetRegionalIPCA(code, '202201', '202612');
     setRegionalIpca(data);
     setRegionalLoading(false);
   }, []);
@@ -64,10 +79,26 @@ export default function App() {
   }, [selectedRegionCode, refreshRegionalIPCA]);
 
   // Handlers
-  function handleAdd(t: Transaction) { setTransactions((prev) => [...prev, t]); }
-  function handleDelete(id: string) { setTransactions((prev) => prev.filter((t) => t.id !== id)); }
-  function handleLoadDemo(ts: Transaction[]) { setTransactions(ts); setPage('dashboard'); }
-  function handleClear() { setTransactions([]); }
+  async function handleAdd(t: Transaction) {
+    await apiAddTransaction(t);
+    setTransactions((prev) => [...prev, t]);
+  }
+
+  async function handleDelete(id: string) {
+    await apiDeleteTransaction(id);
+    setTransactions((prev) => prev.filter((t) => t.id !== id));
+  }
+
+  async function handleLoadDemo(ts: Transaction[]) {
+    await apiLoadDemo(ts);
+    setTransactions(ts);
+    setPage('dashboard');
+  }
+
+  async function handleClear() {
+    await apiClearTransactions();
+    setTransactions([]);
+  }
 
   function handleSelectRegion(code: string | null) {
     setSelectedRegionCode(code);
@@ -81,7 +112,7 @@ export default function App() {
           transactions={transactions}
           inflationData={inflationData}
           categoryWeights={categoryWeights}
-          ipcaLoading={ipcaLoading || regionalLoading}
+          ipcaLoading={ipcaLoading || regionalLoading || txLoading}
           selectedRegionCode={selectedRegionCode}
           onGoToTransactions={() => setPage('transactions')}
           onGoToMyCity={() => setPage('mycity')}
@@ -92,7 +123,7 @@ export default function App() {
           transactions={transactions}
           onAdd={handleAdd}
           onDelete={handleDelete}
-          onLoadDemo={handleLoadDemo}
+          onLoadDemo={() => handleLoadDemo(DEMO_TRANSACTIONS)}
           onClear={handleClear}
         />
       )}
