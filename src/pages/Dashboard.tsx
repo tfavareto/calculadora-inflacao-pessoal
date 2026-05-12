@@ -43,18 +43,6 @@ export default function Dashboard({
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          {/* Atalho para Minha Cidade */}
-          <button
-            onClick={onGoToMyCity}
-            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-colors"
-            style={region
-              ? { background: 'rgba(249,115,22,0.10)', border: '1px solid rgba(249,115,22,0.25)', color: '#FB923C' }
-              : { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'var(--text-3)' }
-            }
-            title="Ver comparativo com IPCA regional"
-          >
-            {region ? <><span>{region.emoji}</span>{region.city} →</> : <><MapPin size={12} />Minha Cidade</>}
-          </button>
           {ipcaLoading && (
             <div
               className="flex items-center gap-2 text-xs px-3 py-1.5 rounded-lg"

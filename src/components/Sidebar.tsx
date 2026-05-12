@@ -93,12 +93,6 @@ export default function Sidebar({ current, onChange, selectedRegionCode }: Props
             </div>
           </button>
         )}
-        <div className="flex items-center gap-2 px-1">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse-slow shrink-0" />
-          <p className="text-[11px] font-medium" style={{ color: 'var(--text-3)' }}>
-            IPCA via IBGE/SIDRA
-          </p>
-        </div>
       </div>
     </aside>
   );
