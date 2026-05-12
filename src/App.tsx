@@ -12,7 +12,7 @@ import {
   apiGetRegionalIPCA,
 } from './api/client';
 import { FALLBACK_IPCA } from './constants';
-import { DEMO_TRANSACTIONS } from './demoData';
+import { DEMO_TRANSACTIONS_ABOVE, DEMO_TRANSACTIONS_BELOW } from './demoData';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import Transactions from './pages/Transactions';
@@ -134,7 +134,8 @@ export default function App() {
           transactions={transactions}
           onAdd={handleAdd}
           onDelete={handleDelete}
-          onLoadDemo={() => handleLoadDemo(DEMO_TRANSACTIONS)}
+          onLoadDemoAbove={() => handleLoadDemo(DEMO_TRANSACTIONS_ABOVE)}
+          onLoadDemoBelow={() => handleLoadDemo(DEMO_TRANSACTIONS_BELOW)}
           onClear={handleClear}
         />
       )}

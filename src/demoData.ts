@@ -1,593 +1,202 @@
 import { Transaction, IPCACategory } from './types';
 
-function tx(
-  date: string,
-  description: string,
-  category: IPCACategory,
-  type: 'expense' | 'income',
-  amount: number,
-): Transaction {
-  return { id: crypto.randomUUID(), date, description, category, type, amount };
+/* ─── Utilitário ──────────────────────────────────────────────
+   rep(v, n) → array com n cópias de v
+   ─────────────────────────────────────────────────────────── */
+function rep<T>(v: T, n: number): T[] { return Array(n).fill(v); }
+
+/* ─── 27 meses: Jan/2024 → Mar/2026 ─────────────────────────
+   Índice 0 = Jan/2024 … índice 26 = Mar/2026
+   ─────────────────────────────────────────────────────────── */
+const MONTHS: string[] = (() => {
+  const m: string[] = [];
+  for (let y = 2024; y <= 2026; y++)
+    for (let mo = 1; mo <= (y === 2026 ? 3 : 12); mo++)
+      m.push(`${y}-${String(mo).padStart(2, '0')}`);
+  return m; // 27 entradas
+})();
+
+/* ═══════════════════════════════════════════════════════════
+   CENÁRIO A — Inflação ACIMA do IPCA
+   Perfil: casal com filhos, alta concentração em alimentação,
+           educação e saúde — setores com inflação acima da média.
+   Inflação pessoal acumulada ≈ 14,8 %
+   IPCA oficial Jan/24 → Mar/26 ≈ 11,4 %
+   ═══════════════════════════════════════════════════════════ */
+
+//                          [Jan/24–Jun/24] [Jul/24–Dez/24] [Jan/25–Jun/25] [Jul/25–Mar/26]
+const A_alimentacao  = [...rep(2800, 6), ...rep(2940, 6), ...rep(3080, 6), ...rep(3280, 9)];
+//                          [Jan/24–Mar/24] [Abr/24–Mar/25]  [Abr/25–Mar/26]
+const A_moradia      = [...rep(3200, 3), ...rep(3360, 12), ...rep(3570, 12)]; // +5% abr/24, +6% abr/25
+//                          [Jan/24–Dez/24] [Jan/25–Dez/25]  [Jan/26–Mar/26]
+const A_educacao     = [...rep(1800, 12), ...rep(1980, 12), ...rep(2196, 3)]; // +10% jan/25, +10,9% jan/26
+//                          [Jan/24–Abr/24] [Mai/24–Abr/25]  [Mai/25–Mar/26]
+const A_saude        = [...rep(800, 4),  ...rep(840, 12), ...rep(924, 11)];   // +5% mai/24, +10% mai/25
+const A_transportes  = [...rep(600, 6),  ...rep(615, 6),  ...rep(628, 6),  ...rep(648, 9)];
+const A_vestuario    = [...rep(300, 6),  ...rep(315, 6),  ...rep(322, 6),  ...rep(336, 9)];
+const A_despesas     = [...rep(400, 6),  ...rep(415, 6),  ...rep(428, 6),  ...rep(440, 9)];
+//                          [Jan/24–Dez/24] [Jan/25–Set/25]  [Out/25–Mar/26]
+const A_artigos      = [...rep(200, 12), ...rep(208, 9),  ...rep(216, 6)];
+const A_comunicacao  = [...rep(150, 12), ...rep(154, 9),  ...rep(157, 6)];
+//                          [Jan/24–Fev/25] 14 meses  [Mar/25–Mar/26] 13 meses
+const A_income       = [...rep(14000, 14), ...rep(15000, 13)];
+
+/* ═══════════════════════════════════════════════════════════
+   CENÁRIO B — Inflação ABAIXO do IPCA
+   Perfil: jovem profissional solteiro, gastos controlados,
+           alto peso em moradia (aluguel negociado) e comunicação
+           (setor com preços estáveis), baixo peso em serviços
+           de alta inflação.
+   Inflação pessoal acumulada ≈ 6,4 %
+   IPCA oficial Jan/24 → Mar/26 ≈ 11,4 %
+   ═══════════════════════════════════════════════════════════ */
+
+const B_alimentacao  = [...rep(900, 6),  ...rep(920, 6),  ...rep(942, 6),  ...rep(972, 9)];
+const B_moradia      = [...rep(1800, 3), ...rep(1854, 12), ...rep(1908, 12)]; // +3% abr/24, +2,9% abr/25
+const B_educacao     = [...rep(400, 12), ...rep(432, 12), ...rep(448, 3)];    // cursos online +8% jan/25
+const B_saude        = [...rep(250, 4),  ...rep(263, 12), ...rep(275, 11)];
+const B_transportes  = [...rep(320, 6),  ...rep(326, 6),  ...rep(331, 6),  ...rep(336, 9)]; // transp. público
+const B_vestuario    = [...rep(200, 6),  ...rep(206, 6),  ...rep(210, 6),  ...rep(214, 9)];
+const B_despesas     = [...rep(550, 6),  ...rep(558, 6),  ...rep(565, 6),  ...rep(572, 9)];
+const B_artigos      = [...rep(280, 12), ...rep(284, 9),  ...rep(288, 6)];
+const B_comunicacao  = [...rep(350, 12), ...rep(355, 9),  ...rep(360, 6)]; // telecomunicações: inflação baixa
+const B_income       = [...rep(6500, 14), ...rep(7000, 13)];
+
+/* ─── Gerador de transações ──────────────────────────────── */
+function r(n: number) { return Math.round(n * 100) / 100; }
+
+interface Scenario {
+  income:       number[];
+  alimentacao:  number[];
+  moradia:      number[];
+  educacao:     number[];
+  saude:        number[];
+  transportes:  number[];
+  vestuario:    number[];
+  despesas:     number[];
+  artigos:      number[];
+  comunicacao:  number[];
 }
 
+function buildDemo(
+  data: Scenario,
+  prefix: string,
+  incomeDesc: string,
+): Transaction[] {
+  const txs: Transaction[] = [];
+  let seq = 1;
+
+  function add(
+    ym: string,
+    day: number,
+    desc: string,
+    cat: IPCACategory,
+    type: 'expense' | 'income',
+    amount: number,
+  ) {
+    txs.push({
+      id: `${prefix}-${String(seq++).padStart(4, '0')}`,
+      date: `${ym}-${String(day).padStart(2, '0')}`,
+      description: desc,
+      category: cat,
+      type,
+      amount: r(amount),
+    });
+  }
+
+  for (let i = 0; i < MONTHS.length; i++) {
+    const ym = MONTHS[i];
+    const mes = parseInt(ym.split('-')[1]);
+
+    const al = data.alimentacao[i];
+    const mv = data.moradia[i];
+    const ed = data.educacao[i];
+    const sa = data.saude[i];
+    const tr = data.transportes[i];
+    const ve = data.vestuario[i];
+    const dp = data.despesas[i];
+    const ar = data.artigos[i];
+    const co = data.comunicacao[i];
+
+    /* Renda */
+    add(ym, 5, incomeDesc, 'despesas_pessoais', 'income', data.income[i]);
+
+    /* Alimentação e Bebidas (3 lançamentos) */
+    add(ym,  7, 'Supermercado',          'alimentacao_bebidas', 'expense', r(al * 0.60));
+    add(ym, 18, 'Feira e mercadinho',    'alimentacao_bebidas', 'expense', r(al * 0.25));
+    add(ym, 25, 'Alimentação fora',      'alimentacao_bebidas', 'expense', r(al * 0.15));
+
+    /* Moradia (3 lançamentos) */
+    add(ym,  5, 'Aluguel',                         'moradia', 'expense', r(mv * 0.75));
+    add(ym, 10, 'Condomínio e energia elétrica',   'moradia', 'expense', r(mv * 0.20));
+    add(ym, 15, 'Conta de gás',                    'moradia', 'expense', r(mv * 0.05));
+
+    /* Educação (2 lançamentos) */
+    add(ym,  5, 'Mensalidade',                                    'educacao', 'expense', r(ed * 0.88));
+    add(ym, 20, mes <= 2 ? 'Material didático e livros' : 'Materiais e taxas',
+                                                                  'educacao', 'expense', r(ed * 0.12));
+
+    /* Saúde e Cuidados Pessoais (2 lançamentos) */
+    add(ym,  8, 'Plano de saúde',       'saude_cuidados', 'expense', r(sa * 0.70));
+    add(ym, 20, 'Farmácia e cuidados',  'saude_cuidados', 'expense', r(sa * 0.30));
+
+    /* Transportes (2 lançamentos) */
+    add(ym, 12, 'Combustível / transporte público', 'transportes', 'expense', r(tr * 0.65));
+    add(ym, 25, 'Estacionamento e pedágio',         'transportes', 'expense', r(tr * 0.35));
+
+    /* Vestuário (1 lançamento) */
+    add(ym, 15, 'Roupas e calçados', 'vestuario', 'expense', ve);
+
+    /* Despesas Pessoais (2 lançamentos) */
+    add(ym, 18, 'Lazer e entretenimento', 'despesas_pessoais', 'expense', r(dp * 0.55));
+    add(ym, 28, 'Serviços pessoais',      'despesas_pessoais', 'expense', r(dp * 0.45));
+
+    /* Artigos de Residência (1 lançamento) */
+    add(ym, 22, 'Itens domésticos', 'artigos_residencia', 'expense', ar);
+
+    /* Comunicação (3 lançamentos) */
+    add(ym, 10, 'Internet banda larga', 'comunicacao', 'expense', r(co * 0.45));
+    add(ym, 10, 'Plano de celular',     'comunicacao', 'expense', r(co * 0.35));
+    add(ym, 15, 'Streaming',            'comunicacao', 'expense', r(co * 0.20));
+  }
+
+  return txs;
+}
+
+/* ─── Exportações ────────────────────────────────────────── */
+
 /**
- * Demo dataset — Jan/2024 → Mar/2026 (27 months)
- *
- * Cenário: casal em apartamento alugado, São Paulo, renda ~R$9 k–9,5 k/mês.
- * A inflação pessoal cresce levemente acima do IPCA oficial (mix de serviços e
- * alimentação pesada), deixando a comparação interessante para o usuário.
- *
- * Eventos notáveis embutidos:
- *  • Reajuste aluguel em Abr/24 (+5 %) e Abr/25 (+6 %)
- *  • Reajuste plano de saúde em Abr/24 (+9,2 %) — ANS
- *  • Aumento salário em Mar/24 (R$ 9 k) e Mar/25 (R$ 9,5 k)
- *  • Alta banda larga/celular Jan/25 (+10 %)
- *  • Bandeira escassez hídrica out-nov/24 → conta de luz +R$ 80
- *  • Mensalidade faculdade reajuste em Fev/24 (+7 %) e Fev/25 (+6 %)
- *  • Gastos extra: férias Jan/25, reforma banheiro Ago/24
+ * Demo A — Inflação pessoal ACIMA do IPCA (~14,8 %)
+ * Casal com filhos, alto gasto em alimentação, educação e saúde.
+ * Período: Jan/2024 → Mar/2026 | Renda: R$ 14 k → R$ 15 k
  */
-export const DEMO_TRANSACTIONS: Transaction[] = [
+export const DEMO_TRANSACTIONS_ABOVE: Transaction[] = buildDemo(
+  {
+    income: A_income, alimentacao: A_alimentacao, moradia: A_moradia,
+    educacao: A_educacao, saude: A_saude, transportes: A_transportes,
+    vestuario: A_vestuario, despesas: A_despesas,
+    artigos: A_artigos, comunicacao: A_comunicacao,
+  },
+  'dma',
+  'Salário — Ana e Pedro',
+);
 
-  // ═══════════════════════════════════════════════════════════
-  // Janeiro 2024  — mês-base
-  // ═══════════════════════════════════════════════════════════
-  tx('2024-01-05', 'Supermercado Pão de Açúcar',   'alimentacao_bebidas', 'expense', 920),
-  tx('2024-01-12', 'iFood — almoço & jantar',       'alimentacao_bebidas', 'expense', 380),
-  tx('2024-01-19', 'Mercado Extra — reposição',     'alimentacao_bebidas', 'expense', 490),
-  tx('2024-01-03', 'Aluguel + condomínio',           'moradia',             'expense', 2800),
-  tx('2024-01-10', 'Enel — conta de luz',            'moradia',             'expense', 210),
-  tx('2024-01-10', 'Sabesp — conta de água',         'moradia',             'expense', 92),
-  tx('2024-01-15', 'Gasolina Shell',                 'transportes',         'expense', 345),
-  tx('2024-01-22', 'Uber — semana trabalho',         'transportes',         'expense', 178),
-  tx('2024-01-08', 'Bradesco Saúde — plano',         'saude_cuidados',      'expense', 480),
-  tx('2024-01-14', 'Drogasil — farmácia',            'saude_cuidados',      'expense', 128),
-  tx('2024-01-05', 'Mensalidade faculdade',           'educacao',            'expense', 1100),
-  tx('2024-01-08', 'Tim — celular',                  'comunicacao',         'expense', 79),
-  tx('2024-01-08', 'Claro — internet fibra',         'comunicacao',         'expense', 110),
-  tx('2024-01-25', 'Netflix + Spotify',              'despesas_pessoais',   'expense', 85),
-  tx('2024-01-28', 'Smart Fit — academia',           'despesas_pessoais',   'expense', 120),
-  tx('2024-01-31', 'Salário Janeiro/24',             'alimentacao_bebidas', 'income',  8500),
+/**
+ * Demo B — Inflação pessoal ABAIXO do IPCA (~6,4 %)
+ * Jovem profissional solteiro, gastos controlados, alto peso em
+ * moradia (aluguel estável) e comunicação (preços estáveis).
+ * Período: Jan/2024 → Mar/2026 | Renda: R$ 6,5 k → R$ 7 k
+ */
+export const DEMO_TRANSACTIONS_BELOW: Transaction[] = buildDemo(
+  {
+    income: B_income, alimentacao: B_alimentacao, moradia: B_moradia,
+    educacao: B_educacao, saude: B_saude, transportes: B_transportes,
+    vestuario: B_vestuario, despesas: B_despesas,
+    artigos: B_artigos, comunicacao: B_comunicacao,
+  },
+  'dmb',
+  'Salário — Lucas',
+);
 
-  // ═══════════════════════════════════════════════════════════
-  // Fevereiro 2024  — Carnaval; reajuste faculdade
-  // ═══════════════════════════════════════════════════════════
-  tx('2024-02-06', 'Supermercado Pão de Açúcar',   'alimentacao_bebidas', 'expense', 960),
-  tx('2024-02-13', 'iFood — semana de carnaval',    'alimentacao_bebidas', 'expense', 520),
-  tx('2024-02-20', 'Mercado Extra',                  'alimentacao_bebidas', 'expense', 510),
-  tx('2024-02-03', 'Aluguel + condomínio',           'moradia',             'expense', 2800),
-  tx('2024-02-10', 'Enel — conta de luz',            'moradia',             'expense', 245),
-  tx('2024-02-10', 'Sabesp — conta de água',         'moradia',             'expense', 98),
-  tx('2024-02-13', 'Gasolina Shell',                 'transportes',         'expense', 362),
-  tx('2024-02-20', 'Uber — deslocamentos carnaval',  'transportes',         'expense', 220),
-  tx('2024-02-08', 'Bradesco Saúde — plano',         'saude_cuidados',      'expense', 480),
-  tx('2024-02-16', 'Drogasil — farmácia',            'saude_cuidados',      'expense', 145),
-  tx('2024-02-05', 'Mensalidade faculdade',           'educacao',            'expense', 1177),
-  tx('2024-02-08', 'Tim — celular',                  'comunicacao',         'expense', 79),
-  tx('2024-02-08', 'Claro — internet fibra',         'comunicacao',         'expense', 110),
-  tx('2024-02-18', 'Roupas carnaval — Renner',       'vestuario',           'expense', 195),
-  tx('2024-02-25', 'Netflix + Spotify',              'despesas_pessoais',   'expense', 85),
-  tx('2024-02-28', 'Smart Fit — academia',           'despesas_pessoais',   'expense', 120),
-  tx('2024-02-29', 'Salário Fevereiro/24',           'alimentacao_bebidas', 'income',  8500),
-
-  // ═══════════════════════════════════════════════════════════
-  // Março 2024  — aumento de salário para R$ 9.000
-  // ═══════════════════════════════════════════════════════════
-  tx('2024-03-05', 'Supermercado Pão de Açúcar',   'alimentacao_bebidas', 'expense', 995),
-  tx('2024-03-13', 'iFood',                          'alimentacao_bebidas', 'expense', 410),
-  tx('2024-03-20', 'Mercado Extra',                  'alimentacao_bebidas', 'expense', 540),
-  tx('2024-03-03', 'Aluguel + condomínio',           'moradia',             'expense', 2800),
-  tx('2024-03-10', 'Enel — conta de luz',            'moradia',             'expense', 228),
-  tx('2024-03-10', 'Sabesp — conta de água',         'moradia',             'expense', 95),
-  tx('2024-03-14', 'Gasolina Shell',                 'transportes',         'expense', 370),
-  tx('2024-03-21', 'Uber',                           'transportes',         'expense', 190),
-  tx('2024-03-08', 'Bradesco Saúde — plano',         'saude_cuidados',      'expense', 480),
-  tx('2024-03-15', 'Drogasil — farmácia',            'saude_cuidados',      'expense', 132),
-  tx('2024-03-05', 'Mensalidade faculdade',           'educacao',            'expense', 1177),
-  tx('2024-03-08', 'Tim — celular',                  'comunicacao',         'expense', 79),
-  tx('2024-03-08', 'Claro — internet fibra',         'comunicacao',         'expense', 110),
-  tx('2024-03-25', 'Netflix + Spotify + Max',        'despesas_pessoais',   'expense', 105),
-  tx('2024-03-28', 'Smart Fit — academia',           'despesas_pessoais',   'expense', 120),
-  tx('2024-03-31', 'Salário Março/24 + aumento',    'alimentacao_bebidas', 'income',  9000),
-
-  // ═══════════════════════════════════════════════════════════
-  // Abril 2024  — reajuste aluguel +5 %; reajuste plano de saúde +9,2 %
-  // ═══════════════════════════════════════════════════════════
-  tx('2024-04-04', 'Supermercado Pão de Açúcar',   'alimentacao_bebidas', 'expense', 1020),
-  tx('2024-04-11', 'iFood',                          'alimentacao_bebidas', 'expense', 395),
-  tx('2024-04-18', 'Mercado Extra',                  'alimentacao_bebidas', 'expense', 560),
-  tx('2024-04-03', 'Aluguel + condomínio',           'moradia',             'expense', 2940),
-  tx('2024-04-10', 'Enel — conta de luz',            'moradia',             'expense', 232),
-  tx('2024-04-10', 'Sabesp — conta de água',         'moradia',             'expense', 98),
-  tx('2024-04-15', 'Gasolina Shell',                 'transportes',         'expense', 380),
-  tx('2024-04-22', 'Uber',                           'transportes',         'expense', 185),
-  tx('2024-04-08', 'Bradesco Saúde — plano',         'saude_cuidados',      'expense', 524),
-  tx('2024-04-18', 'Drogasil — farmácia',            'saude_cuidados',      'expense', 158),
-  tx('2024-04-05', 'Mensalidade faculdade',           'educacao',            'expense', 1177),
-  tx('2024-04-08', 'Tim — celular',                  'comunicacao',         'expense', 79),
-  tx('2024-04-08', 'Claro — internet fibra',         'comunicacao',         'expense', 110),
-  tx('2024-04-20', 'Calça jeans + camisa — C&A',    'vestuario',           'expense', 285),
-  tx('2024-04-25', 'Netflix + Spotify + Max',        'despesas_pessoais',   'expense', 105),
-  tx('2024-04-28', 'Smart Fit — academia',           'despesas_pessoais',   'expense', 120),
-  tx('2024-04-30', 'Salário Abril/24',               'alimentacao_bebidas', 'income',  9000),
-
-  // ═══════════════════════════════════════════════════════════
-  // Maio 2024
-  // ═══════════════════════════════════════════════════════════
-  tx('2024-05-04', 'Supermercado Pão de Açúcar',   'alimentacao_bebidas', 'expense', 1035),
-  tx('2024-05-10', 'iFood',                          'alimentacao_bebidas', 'expense', 405),
-  tx('2024-05-17', 'Mercado Extra',                  'alimentacao_bebidas', 'expense', 565),
-  tx('2024-05-03', 'Aluguel + condomínio',           'moradia',             'expense', 2940),
-  tx('2024-05-10', 'Enel — conta de luz',            'moradia',             'expense', 238),
-  tx('2024-05-10', 'Sabesp — conta de água',         'moradia',             'expense', 100),
-  tx('2024-05-14', 'Gasolina Shell',                 'transportes',         'expense', 382),
-  tx('2024-05-21', 'Uber',                           'transportes',         'expense', 188),
-  tx('2024-05-08', 'Bradesco Saúde — plano',         'saude_cuidados',      'expense', 524),
-  tx('2024-05-15', 'Drogasil — farmácia',            'saude_cuidados',      'expense', 135),
-  tx('2024-05-05', 'Mensalidade faculdade',           'educacao',            'expense', 1177),
-  tx('2024-05-08', 'Tim — celular',                  'comunicacao',         'expense', 79),
-  tx('2024-05-08', 'Claro — internet fibra',         'comunicacao',         'expense', 110),
-  tx('2024-05-25', 'Netflix + Spotify + Max',        'despesas_pessoais',   'expense', 105),
-  tx('2024-05-28', 'Smart Fit — academia',           'despesas_pessoais',   'expense', 120),
-  tx('2024-05-31', 'Salário Maio/24',                'alimentacao_bebidas', 'income',  9000),
-
-  // ═══════════════════════════════════════════════════════════
-  // Junho 2024  — inverno; manutenção veículo
-  // ═══════════════════════════════════════════════════════════
-  tx('2024-06-05', 'Supermercado Pão de Açúcar',   'alimentacao_bebidas', 'expense', 1050),
-  tx('2024-06-12', 'iFood',                          'alimentacao_bebidas', 'expense', 390),
-  tx('2024-06-19', 'Mercado Extra',                  'alimentacao_bebidas', 'expense', 545),
-  tx('2024-06-03', 'Aluguel + condomínio',           'moradia',             'expense', 2940),
-  tx('2024-06-10', 'Enel — conta de luz',            'moradia',             'expense', 252),
-  tx('2024-06-10', 'Sabesp — conta de água',         'moradia',             'expense', 98),
-  tx('2024-06-13', 'Gasolina Shell',                 'transportes',         'expense', 375),
-  tx('2024-06-20', 'Revisão 30k — concessionária',  'transportes',         'expense', 480),
-  tx('2024-06-08', 'Bradesco Saúde — plano',         'saude_cuidados',      'expense', 524),
-  tx('2024-06-14', 'Drogasil — vitaminas inverno',   'saude_cuidados',      'expense', 165),
-  tx('2024-06-05', 'Mensalidade faculdade',           'educacao',            'expense', 1177),
-  tx('2024-06-08', 'Tim — celular',                  'comunicacao',         'expense', 79),
-  tx('2024-06-08', 'Claro — internet fibra',         'comunicacao',         'expense', 110),
-  tx('2024-06-15', 'Casaco + bota inverno — Zara',  'vestuario',           'expense', 430),
-  tx('2024-06-25', 'Netflix + Spotify + Max',        'despesas_pessoais',   'expense', 105),
-  tx('2024-06-28', 'Smart Fit — academia',           'despesas_pessoais',   'expense', 120),
-  tx('2024-06-28', 'Salário Junho/24',               'alimentacao_bebidas', 'income',  9000),
-
-  // ═══════════════════════════════════════════════════════════
-  // Julho 2024  — férias curtas; gasolina sobe
-  // ═══════════════════════════════════════════════════════════
-  tx('2024-07-04', 'Supermercado Pão de Açúcar',   'alimentacao_bebidas', 'expense', 1080),
-  tx('2024-07-11', 'iFood — férias',                'alimentacao_bebidas', 'expense', 450),
-  tx('2024-07-18', 'Mercado Extra',                  'alimentacao_bebidas', 'expense', 580),
-  tx('2024-07-03', 'Aluguel + condomínio',           'moradia',             'expense', 2940),
-  tx('2024-07-10', 'Enel — conta de luz',            'moradia',             'expense', 248),
-  tx('2024-07-10', 'Sabesp — conta de água',         'moradia',             'expense', 96),
-  tx('2024-07-12', 'Gasolina Shell',                 'transportes',         'expense', 395),
-  tx('2024-07-20', 'Uber',                           'transportes',         'expense', 192),
-  tx('2024-07-08', 'Bradesco Saúde — plano',         'saude_cuidados',      'expense', 524),
-  tx('2024-07-16', 'Drogasil — farmácia',            'saude_cuidados',      'expense', 142),
-  tx('2024-07-05', 'Mensalidade faculdade',           'educacao',            'expense', 1177),
-  tx('2024-07-08', 'Tim — celular',                  'comunicacao',         'expense', 79),
-  tx('2024-07-08', 'Claro — internet fibra',         'comunicacao',         'expense', 110),
-  tx('2024-07-20', 'Passagem aérea — viagem curta',  'despesas_pessoais',   'expense', 680),
-  tx('2024-07-25', 'Netflix + Spotify + Max',        'despesas_pessoais',   'expense', 105),
-  tx('2024-07-28', 'Smart Fit — academia',           'despesas_pessoais',   'expense', 120),
-  tx('2024-07-31', 'Salário Julho/24',               'alimentacao_bebidas', 'income',  9000),
-
-  // ═══════════════════════════════════════════════════════════
-  // Agosto 2024  — IPCA -0.02 % (leve deflação); reforma banheiro
-  // ═══════════════════════════════════════════════════════════
-  tx('2024-08-06', 'Supermercado Pão de Açúcar',   'alimentacao_bebidas', 'expense', 1065),
-  tx('2024-08-13', 'iFood',                          'alimentacao_bebidas', 'expense', 380),
-  tx('2024-08-20', 'Mercado Extra',                  'alimentacao_bebidas', 'expense', 555),
-  tx('2024-08-03', 'Aluguel + condomínio',           'moradia',             'expense', 2940),
-  tx('2024-08-10', 'Enel — conta de luz',            'moradia',             'expense', 240),
-  tx('2024-08-10', 'Sabesp — conta de água',         'moradia',             'expense', 94),
-  tx('2024-08-14', 'Gasolina Shell',                 'transportes',         'expense', 368),
-  tx('2024-08-21', 'Uber',                           'transportes',         'expense', 178),
-  tx('2024-08-08', 'Bradesco Saúde — plano',         'saude_cuidados',      'expense', 524),
-  tx('2024-08-15', 'Drogasil — farmácia',            'saude_cuidados',      'expense', 130),
-  tx('2024-08-05', 'Mensalidade faculdade',           'educacao',            'expense', 1177),
-  tx('2024-08-08', 'Tim — celular',                  'comunicacao',         'expense', 79),
-  tx('2024-08-08', 'Claro — internet fibra',         'comunicacao',         'expense', 110),
-  tx('2024-08-22', 'Reforma banheiro — materiais',   'artigos_residencia',  'expense', 1250),
-  tx('2024-08-25', 'Netflix + Spotify + Max',        'despesas_pessoais',   'expense', 105),
-  tx('2024-08-28', 'Smart Fit — academia',           'despesas_pessoais',   'expense', 120),
-  tx('2024-08-30', 'Salário Agosto/24',              'alimentacao_bebidas', 'income',  9000),
-
-  // ═══════════════════════════════════════════════════════════
-  // Setembro 2024
-  // ═══════════════════════════════════════════════════════════
-  tx('2024-09-05', 'Supermercado Pão de Açúcar',   'alimentacao_bebidas', 'expense', 1090),
-  tx('2024-09-12', 'iFood',                          'alimentacao_bebidas', 'expense', 415),
-  tx('2024-09-19', 'Mercado Extra',                  'alimentacao_bebidas', 'expense', 572),
-  tx('2024-09-03', 'Aluguel + condomínio',           'moradia',             'expense', 2940),
-  tx('2024-09-10', 'Enel — conta de luz',            'moradia',             'expense', 258),
-  tx('2024-09-10', 'Sabesp — conta de água',         'moradia',             'expense', 99),
-  tx('2024-09-13', 'Gasolina Shell',                 'transportes',         'expense', 380),
-  tx('2024-09-20', 'Uber',                           'transportes',         'expense', 195),
-  tx('2024-09-08', 'Bradesco Saúde — plano',         'saude_cuidados',      'expense', 524),
-  tx('2024-09-16', 'Drogasil — farmácia',            'saude_cuidados',      'expense', 148),
-  tx('2024-09-05', 'Mensalidade faculdade',           'educacao',            'expense', 1177),
-  tx('2024-09-08', 'Tim — celular',                  'comunicacao',         'expense', 79),
-  tx('2024-09-08', 'Claro — internet fibra',         'comunicacao',         'expense', 110),
-  tx('2024-09-20', 'Tênis esportivo — Netshoes',    'vestuario',           'expense', 320),
-  tx('2024-09-25', 'Netflix + Spotify + Max',        'despesas_pessoais',   'expense', 105),
-  tx('2024-09-28', 'Smart Fit — academia',           'despesas_pessoais',   'expense', 120),
-  tx('2024-09-30', 'Salário Setembro/24',            'alimentacao_bebidas', 'income',  9000),
-
-  // ═══════════════════════════════════════════════════════════
-  // Outubro 2024  — bandeira escassez hídrica (+R$ 80 luz)
-  // ═══════════════════════════════════════════════════════════
-  tx('2024-10-04', 'Supermercado Pão de Açúcar',   'alimentacao_bebidas', 'expense', 1110),
-  tx('2024-10-11', 'iFood',                          'alimentacao_bebidas', 'expense', 420),
-  tx('2024-10-18', 'Mercado Extra',                  'alimentacao_bebidas', 'expense', 585),
-  tx('2024-10-03', 'Aluguel + condomínio',           'moradia',             'expense', 2940),
-  tx('2024-10-10', 'Enel — conta de luz (bandeira)', 'moradia',             'expense', 340),
-  tx('2024-10-10', 'Sabesp — conta de água',         'moradia',             'expense', 102),
-  tx('2024-10-15', 'Gasolina Shell',                 'transportes',         'expense', 388),
-  tx('2024-10-22', 'Uber',                           'transportes',         'expense', 198),
-  tx('2024-10-08', 'Bradesco Saúde — plano',         'saude_cuidados',      'expense', 524),
-  tx('2024-10-15', 'Drogasil — farmácia',            'saude_cuidados',      'expense', 155),
-  tx('2024-10-05', 'Mensalidade faculdade',           'educacao',            'expense', 1177),
-  tx('2024-10-08', 'Tim — celular',                  'comunicacao',         'expense', 79),
-  tx('2024-10-08', 'Claro — internet fibra',         'comunicacao',         'expense', 110),
-  tx('2024-10-18', 'Jogo de lençóis + travesseiros', 'artigos_residencia',  'expense', 280),
-  tx('2024-10-25', 'Netflix + Spotify + Max',        'despesas_pessoais',   'expense', 105),
-  tx('2024-10-28', 'Smart Fit — academia',           'despesas_pessoais',   'expense', 120),
-  tx('2024-10-31', 'Salário Outubro/24',             'alimentacao_bebidas', 'income',  9000),
-
-  // ═══════════════════════════════════════════════════════════
-  // Novembro 2024  — Black Friday (eletrônico)
-  // ═══════════════════════════════════════════════════════════
-  tx('2024-11-05', 'Supermercado Pão de Açúcar',   'alimentacao_bebidas', 'expense', 1100),
-  tx('2024-11-12', 'iFood',                          'alimentacao_bebidas', 'expense', 410),
-  tx('2024-11-19', 'Mercado Extra',                  'alimentacao_bebidas', 'expense', 570),
-  tx('2024-11-03', 'Aluguel + condomínio',           'moradia',             'expense', 2940),
-  tx('2024-11-10', 'Enel — conta de luz (bandeira)', 'moradia',             'expense', 338),
-  tx('2024-11-10', 'Sabesp — conta de água',         'moradia',             'expense', 100),
-  tx('2024-11-14', 'Gasolina Shell',                 'transportes',         'expense', 392),
-  tx('2024-11-21', 'Uber',                           'transportes',         'expense', 195),
-  tx('2024-11-08', 'Bradesco Saúde — plano',         'saude_cuidados',      'expense', 524),
-  tx('2024-11-14', 'Drogasil — farmácia',            'saude_cuidados',      'expense', 138),
-  tx('2024-11-05', 'Mensalidade faculdade',           'educacao',            'expense', 1177),
-  tx('2024-11-08', 'Tim — celular',                  'comunicacao',         'expense', 79),
-  tx('2024-11-08', 'Claro — internet fibra',         'comunicacao',         'expense', 110),
-  tx('2024-11-29', 'Air fryer Black Friday — Americanas', 'artigos_residencia', 'expense', 349),
-  tx('2024-11-25', 'Netflix + Spotify + Max',        'despesas_pessoais',   'expense', 105),
-  tx('2024-11-28', 'Smart Fit — academia',           'despesas_pessoais',   'expense', 120),
-  tx('2024-11-29', 'Salário Novembro/24',            'alimentacao_bebidas', 'income',  9000),
-
-  // ═══════════════════════════════════════════════════════════
-  // Dezembro 2024  — Natal; 13º salário
-  // ═══════════════════════════════════════════════════════════
-  tx('2024-12-04', 'Supermercado Pão de Açúcar',   'alimentacao_bebidas', 'expense', 1200),
-  tx('2024-12-11', 'iFood',                          'alimentacao_bebidas', 'expense', 480),
-  tx('2024-12-18', 'Mercado Extra — ceia natalina', 'alimentacao_bebidas', 'expense', 680),
-  tx('2024-12-03', 'Aluguel + condomínio',           'moradia',             'expense', 2940),
-  tx('2024-12-10', 'Enel — conta de luz',            'moradia',             'expense', 268),
-  tx('2024-12-10', 'Sabesp — conta de água',         'moradia',             'expense', 103),
-  tx('2024-12-13', 'Gasolina Shell',                 'transportes',         'expense', 405),
-  tx('2024-12-20', 'Uber — viagens festas',          'transportes',         'expense', 230),
-  tx('2024-12-08', 'Bradesco Saúde — plano',         'saude_cuidados',      'expense', 524),
-  tx('2024-12-15', 'Drogasil — farmácia',            'saude_cuidados',      'expense', 145),
-  tx('2024-12-05', 'Mensalidade faculdade',           'educacao',            'expense', 1177),
-  tx('2024-12-08', 'Tim — celular',                  'comunicacao',         'expense', 79),
-  tx('2024-12-08', 'Claro — internet fibra',         'comunicacao',         'expense', 110),
-  tx('2024-12-20', 'Presentes Natal — Shopee/Americanas', 'despesas_pessoais', 'expense', 420),
-  tx('2024-12-25', 'Netflix + Spotify + Max',        'despesas_pessoais',   'expense', 105),
-  tx('2024-12-28', 'Smart Fit — academia',           'despesas_pessoais',   'expense', 120),
-  tx('2024-12-20', '13º salário Dezembro/24',        'alimentacao_bebidas', 'income',  9000),
-  tx('2024-12-31', 'Salário Dezembro/24',            'alimentacao_bebidas', 'income',  9000),
-
-  // ═══════════════════════════════════════════════════════════
-  // Janeiro 2025  — viagem réveillon; bandeira tarifária verde
-  // ═══════════════════════════════════════════════════════════
-  tx('2025-01-07', 'Supermercado Pão de Açúcar',   'alimentacao_bebidas', 'expense', 1130),
-  tx('2025-01-14', 'iFood — pós-férias',            'alimentacao_bebidas', 'expense', 430),
-  tx('2025-01-21', 'Mercado Extra',                  'alimentacao_bebidas', 'expense', 590),
-  tx('2025-01-03', 'Aluguel + condomínio',           'moradia',             'expense', 2940),
-  tx('2025-01-10', 'Enel — conta de luz',            'moradia',             'expense', 265),
-  tx('2025-01-10', 'Sabesp — conta de água',         'moradia',             'expense', 105),
-  tx('2025-01-08', 'Gasolina Shell',                 'transportes',         'expense', 398),
-  tx('2025-01-17', 'Uber',                           'transportes',         'expense', 200),
-  tx('2025-01-08', 'Bradesco Saúde — plano',         'saude_cuidados',      'expense', 524),
-  tx('2025-01-16', 'Drogasil — farmácia',            'saude_cuidados',      'expense', 142),
-  tx('2025-01-05', 'Mensalidade faculdade',           'educacao',            'expense', 1177),
-  tx('2025-01-08', 'Tim — celular',                  'comunicacao',         'expense', 79),
-  tx('2025-01-08', 'Claro — internet fibra',         'comunicacao',         'expense', 110),
-  tx('2025-01-10', 'Viagem réveillon — hotel/passeios', 'despesas_pessoais', 'expense', 1850),
-  tx('2025-01-25', 'Netflix + Spotify + Max',        'despesas_pessoais',   'expense', 105),
-  tx('2025-01-28', 'Smart Fit — academia',           'despesas_pessoais',   'expense', 120),
-  tx('2025-01-31', 'Salário Janeiro/25',             'alimentacao_bebidas', 'income',  9000),
-
-  // ═══════════════════════════════════════════════════════════
-  // Fevereiro 2025  — IPCA 1,31 % (alta tarifária energia/transporte)
-  // reajuste faculdade +6 %; internet + celular +10 %
-  // ═══════════════════════════════════════════════════════════
-  tx('2025-02-05', 'Supermercado Pão de Açúcar',   'alimentacao_bebidas', 'expense', 1180),
-  tx('2025-02-12', 'iFood — carnaval',              'alimentacao_bebidas', 'expense', 550),
-  tx('2025-02-19', 'Mercado Extra',                  'alimentacao_bebidas', 'expense', 610),
-  tx('2025-02-03', 'Aluguel + condomínio',           'moradia',             'expense', 2940),
-  tx('2025-02-10', 'Enel — conta de luz (alta)',     'moradia',             'expense', 310),
-  tx('2025-02-10', 'Sabesp — conta de água',         'moradia',             'expense', 108),
-  tx('2025-02-12', 'Gasolina Shell',                 'transportes',         'expense', 420),
-  tx('2025-02-19', 'Uber',                           'transportes',         'expense', 225),
-  tx('2025-02-08', 'Bradesco Saúde — plano',         'saude_cuidados',      'expense', 524),
-  tx('2025-02-14', 'Drogasil — farmácia',            'saude_cuidados',      'expense', 162),
-  tx('2025-02-05', 'Mensalidade faculdade',           'educacao',            'expense', 1247),
-  tx('2025-02-08', 'Tim — celular',                  'comunicacao',         'expense', 87),
-  tx('2025-02-08', 'Claro — internet fibra',         'comunicacao',         'expense', 121),
-  tx('2025-02-22', 'Camisas sociais + terno — Zara', 'vestuario',           'expense', 520),
-  tx('2025-02-25', 'Netflix + Spotify + Max',        'despesas_pessoais',   'expense', 112),
-  tx('2025-02-28', 'Smart Fit — academia',           'despesas_pessoais',   'expense', 130),
-  tx('2025-02-28', 'Salário Fevereiro/25',           'alimentacao_bebidas', 'income',  9000),
-
-  // ═══════════════════════════════════════════════════════════
-  // Março 2025  — aumento salário para R$ 9.500
-  // ═══════════════════════════════════════════════════════════
-  tx('2025-03-06', 'Supermercado Pão de Açúcar',   'alimentacao_bebidas', 'expense', 1210),
-  tx('2025-03-13', 'iFood',                          'alimentacao_bebidas', 'expense', 435),
-  tx('2025-03-20', 'Mercado Extra',                  'alimentacao_bebidas', 'expense', 620),
-  tx('2025-03-03', 'Aluguel + condomínio',           'moradia',             'expense', 2940),
-  tx('2025-03-10', 'Enel — conta de luz',            'moradia',             'expense', 295),
-  tx('2025-03-10', 'Sabesp — conta de água',         'moradia',             'expense', 109),
-  tx('2025-03-13', 'Gasolina Shell',                 'transportes',         'expense', 412),
-  tx('2025-03-20', 'Uber',                           'transportes',         'expense', 208),
-  tx('2025-03-08', 'Bradesco Saúde — plano',         'saude_cuidados',      'expense', 524),
-  tx('2025-03-15', 'Drogasil — farmácia',            'saude_cuidados',      'expense', 150),
-  tx('2025-03-05', 'Mensalidade faculdade',           'educacao',            'expense', 1247),
-  tx('2025-03-08', 'Tim — celular',                  'comunicacao',         'expense', 87),
-  tx('2025-03-08', 'Claro — internet fibra',         'comunicacao',         'expense', 121),
-  tx('2025-03-25', 'Netflix + Spotify + Max',        'despesas_pessoais',   'expense', 112),
-  tx('2025-03-28', 'Smart Fit — academia',           'despesas_pessoais',   'expense', 130),
-  tx('2025-03-31', 'Salário Março/25 + aumento',    'alimentacao_bebidas', 'income',  9500),
-
-  // ═══════════════════════════════════════════════════════════
-  // Abril 2025  — reajuste aluguel +6 %; reajuste plano ANS
-  // ═══════════════════════════════════════════════════════════
-  tx('2025-04-04', 'Supermercado Pão de Açúcar',   'alimentacao_bebidas', 'expense', 1235),
-  tx('2025-04-11', 'iFood',                          'alimentacao_bebidas', 'expense', 445),
-  tx('2025-04-18', 'Mercado Extra',                  'alimentacao_bebidas', 'expense', 638),
-  tx('2025-04-03', 'Aluguel + condomínio',           'moradia',             'expense', 3116),
-  tx('2025-04-10', 'Enel — conta de luz',            'moradia',             'expense', 285),
-  tx('2025-04-10', 'Sabesp — conta de água',         'moradia',             'expense', 112),
-  tx('2025-04-14', 'Gasolina Shell',                 'transportes',         'expense', 408),
-  tx('2025-04-21', 'Uber',                           'transportes',         'expense', 210),
-  tx('2025-04-08', 'Bradesco Saúde — plano (ANS)',   'saude_cuidados',      'expense', 572),
-  tx('2025-04-16', 'Drogasil — farmácia',            'saude_cuidados',      'expense', 155),
-  tx('2025-04-05', 'Mensalidade faculdade',           'educacao',            'expense', 1247),
-  tx('2025-04-08', 'Tim — celular',                  'comunicacao',         'expense', 87),
-  tx('2025-04-08', 'Claro — internet fibra',         'comunicacao',         'expense', 121),
-  tx('2025-04-19', 'Tênis + bermudas verão — Nike',  'vestuario',           'expense', 380),
-  tx('2025-04-25', 'Netflix + Spotify + Max',        'despesas_pessoais',   'expense', 112),
-  tx('2025-04-28', 'Smart Fit — academia',           'despesas_pessoais',   'expense', 130),
-  tx('2025-04-30', 'Salário Abril/25',               'alimentacao_bebidas', 'income',  9500),
-
-  // ═══════════════════════════════════════════════════════════
-  // Maio 2025
-  // ═══════════════════════════════════════════════════════════
-  tx('2025-05-06', 'Supermercado Pão de Açúcar',   'alimentacao_bebidas', 'expense', 1255),
-  tx('2025-05-13', 'iFood',                          'alimentacao_bebidas', 'expense', 440),
-  tx('2025-05-20', 'Mercado Extra',                  'alimentacao_bebidas', 'expense', 645),
-  tx('2025-05-03', 'Aluguel + condomínio',           'moradia',             'expense', 3116),
-  tx('2025-05-10', 'Enel — conta de luz',            'moradia',             'expense', 278),
-  tx('2025-05-10', 'Sabesp — conta de água',         'moradia',             'expense', 114),
-  tx('2025-05-13', 'Gasolina Shell',                 'transportes',         'expense', 410),
-  tx('2025-05-20', 'Uber',                           'transportes',         'expense', 205),
-  tx('2025-05-08', 'Bradesco Saúde — plano',         'saude_cuidados',      'expense', 572),
-  tx('2025-05-15', 'Drogasil — farmácia',            'saude_cuidados',      'expense', 145),
-  tx('2025-05-05', 'Mensalidade faculdade',           'educacao',            'expense', 1247),
-  tx('2025-05-08', 'Tim — celular',                  'comunicacao',         'expense', 87),
-  tx('2025-05-08', 'Claro — internet fibra',         'comunicacao',         'expense', 121),
-  tx('2025-05-25', 'Netflix + Spotify + Max',        'despesas_pessoais',   'expense', 112),
-  tx('2025-05-28', 'Smart Fit — academia',           'despesas_pessoais',   'expense', 130),
-  tx('2025-05-30', 'Salário Maio/25',                'alimentacao_bebidas', 'income',  9500),
-
-  // ═══════════════════════════════════════════════════════════
-  // Junho 2025  — inverno; troca de pneus
-  // ═══════════════════════════════════════════════════════════
-  tx('2025-06-05', 'Supermercado Pão de Açúcar',   'alimentacao_bebidas', 'expense', 1270),
-  tx('2025-06-12', 'iFood',                          'alimentacao_bebidas', 'expense', 425),
-  tx('2025-06-19', 'Mercado Extra',                  'alimentacao_bebidas', 'expense', 650),
-  tx('2025-06-03', 'Aluguel + condomínio',           'moradia',             'expense', 3116),
-  tx('2025-06-10', 'Enel — conta de luz',            'moradia',             'expense', 290),
-  tx('2025-06-10', 'Sabesp — conta de água',         'moradia',             'expense', 112),
-  tx('2025-06-14', 'Gasolina Shell',                 'transportes',         'expense', 405),
-  tx('2025-06-21', 'Troca de pneus — Pneustore',    'transportes',         'expense', 920),
-  tx('2025-06-08', 'Bradesco Saúde — plano',         'saude_cuidados',      'expense', 572),
-  tx('2025-06-14', 'Drogasil — vitaminas inverno',   'saude_cuidados',      'expense', 178),
-  tx('2025-06-05', 'Mensalidade faculdade',           'educacao',            'expense', 1247),
-  tx('2025-06-08', 'Tim — celular',                  'comunicacao',         'expense', 87),
-  tx('2025-06-08', 'Claro — internet fibra',         'comunicacao',         'expense', 121),
-  tx('2025-06-18', 'Jaqueta + calça inverno — Farm', 'vestuario',           'expense', 465),
-  tx('2025-06-25', 'Netflix + Spotify + Max',        'despesas_pessoais',   'expense', 112),
-  tx('2025-06-28', 'Smart Fit — academia',           'despesas_pessoais',   'expense', 130),
-  tx('2025-06-30', 'Salário Junho/25',               'alimentacao_bebidas', 'income',  9500),
-
-  // ═══════════════════════════════════════════════════════════
-  // Julho 2025  — IPCA 0,35 %; férias
-  // ═══════════════════════════════════════════════════════════
-  tx('2025-07-04', 'Supermercado Pão de Açúcar',   'alimentacao_bebidas', 'expense', 1280),
-  tx('2025-07-11', 'iFood — férias',                'alimentacao_bebidas', 'expense', 490),
-  tx('2025-07-18', 'Mercado Extra',                  'alimentacao_bebidas', 'expense', 660),
-  tx('2025-07-03', 'Aluguel + condomínio',           'moradia',             'expense', 3116),
-  tx('2025-07-10', 'Enel — conta de luz',            'moradia',             'expense', 285),
-  tx('2025-07-10', 'Sabesp — conta de água',         'moradia',             'expense', 110),
-  tx('2025-07-12', 'Gasolina Shell',                 'transportes',         'expense', 400),
-  tx('2025-07-19', 'Uber',                           'transportes',         'expense', 198),
-  tx('2025-07-08', 'Bradesco Saúde — plano',         'saude_cuidados',      'expense', 572),
-  tx('2025-07-15', 'Drogasil — farmácia',            'saude_cuidados',      'expense', 148),
-  tx('2025-07-05', 'Mensalidade faculdade',           'educacao',            'expense', 1247),
-  tx('2025-07-08', 'Tim — celular',                  'comunicacao',         'expense', 87),
-  tx('2025-07-08', 'Claro — internet fibra',         'comunicacao',         'expense', 121),
-  tx('2025-07-15', 'Pacote viagem — Decolar',        'despesas_pessoais',   'expense', 2200),
-  tx('2025-07-25', 'Netflix + Spotify + Max',        'despesas_pessoais',   'expense', 112),
-  tx('2025-07-28', 'Smart Fit — academia',           'despesas_pessoais',   'expense', 130),
-  tx('2025-07-31', 'Salário Julho/25',               'alimentacao_bebidas', 'income',  9500),
-
-  // ═══════════════════════════════════════════════════════════
-  // Agosto 2025  — IPCA -0,11 % (deflação leve)
-  // ═══════════════════════════════════════════════════════════
-  tx('2025-08-06', 'Supermercado Pão de Açúcar',   'alimentacao_bebidas', 'expense', 1268),
-  tx('2025-08-13', 'iFood',                          'alimentacao_bebidas', 'expense', 415),
-  tx('2025-08-20', 'Mercado Extra',                  'alimentacao_bebidas', 'expense', 640),
-  tx('2025-08-03', 'Aluguel + condomínio',           'moradia',             'expense', 3116),
-  tx('2025-08-10', 'Enel — conta de luz',            'moradia',             'expense', 270),
-  tx('2025-08-10', 'Sabesp — conta de água',         'moradia',             'expense', 108),
-  tx('2025-08-14', 'Gasolina Shell',                 'transportes',         'expense', 392),
-  tx('2025-08-21', 'Uber',                           'transportes',         'expense', 192),
-  tx('2025-08-08', 'Bradesco Saúde — plano',         'saude_cuidados',      'expense', 572),
-  tx('2025-08-15', 'Drogasil — farmácia',            'saude_cuidados',      'expense', 138),
-  tx('2025-08-05', 'Mensalidade faculdade',           'educacao',            'expense', 1247),
-  tx('2025-08-08', 'Tim — celular',                  'comunicacao',         'expense', 87),
-  tx('2025-08-08', 'Claro — internet fibra',         'comunicacao',         'expense', 121),
-  tx('2025-08-25', 'Netflix + Spotify + Max',        'despesas_pessoais',   'expense', 112),
-  tx('2025-08-28', 'Smart Fit — academia',           'despesas_pessoais',   'expense', 130),
-  tx('2025-08-29', 'Salário Agosto/25',              'alimentacao_bebidas', 'income',  9500),
-
-  // ═══════════════════════════════════════════════════════════
-  // Setembro 2025  — IPCA 0,48 %
-  // ═══════════════════════════════════════════════════════════
-  tx('2025-09-05', 'Supermercado Pão de Açúcar',   'alimentacao_bebidas', 'expense', 1285),
-  tx('2025-09-12', 'iFood',                          'alimentacao_bebidas', 'expense', 425),
-  tx('2025-09-19', 'Mercado Extra',                  'alimentacao_bebidas', 'expense', 658),
-  tx('2025-09-03', 'Aluguel + condomínio',           'moradia',             'expense', 3116),
-  tx('2025-09-10', 'Enel — conta de luz',            'moradia',             'expense', 280),
-  tx('2025-09-10', 'Sabesp — conta de água',         'moradia',             'expense', 112),
-  tx('2025-09-13', 'Gasolina Shell',                 'transportes',         'expense', 398),
-  tx('2025-09-20', 'Uber',                           'transportes',         'expense', 202),
-  tx('2025-09-08', 'Bradesco Saúde — plano',         'saude_cuidados',      'expense', 572),
-  tx('2025-09-16', 'Drogasil — farmácia',            'saude_cuidados',      'expense', 152),
-  tx('2025-09-05', 'Mensalidade faculdade',           'educacao',            'expense', 1247),
-  tx('2025-09-08', 'Tim — celular',                  'comunicacao',         'expense', 87),
-  tx('2025-09-08', 'Claro — internet fibra',         'comunicacao',         'expense', 121),
-  tx('2025-09-22', 'Tênis e roupas primavera — Riachuelo', 'vestuario',     'expense', 340),
-  tx('2025-09-25', 'Netflix + Spotify + Max',        'despesas_pessoais',   'expense', 112),
-  tx('2025-09-28', 'Smart Fit — academia',           'despesas_pessoais',   'expense', 130),
-  tx('2025-09-30', 'Salário Setembro/25',            'alimentacao_bebidas', 'income',  9500),
-
-  // ═══════════════════════════════════════════════════════════
-  // Outubro 2025  — IPCA 0,09 % (desinflação)
-  // ═══════════════════════════════════════════════════════════
-  tx('2025-10-04', 'Supermercado Pão de Açúcar',   'alimentacao_bebidas', 'expense', 1292),
-  tx('2025-10-11', 'iFood',                          'alimentacao_bebidas', 'expense', 428),
-  tx('2025-10-18', 'Mercado Extra',                  'alimentacao_bebidas', 'expense', 662),
-  tx('2025-10-03', 'Aluguel + condomínio',           'moradia',             'expense', 3116),
-  tx('2025-10-10', 'Enel — conta de luz',            'moradia',             'expense', 276),
-  tx('2025-10-10', 'Sabesp — conta de água',         'moradia',             'expense', 110),
-  tx('2025-10-15', 'Gasolina Shell',                 'transportes',         'expense', 396),
-  tx('2025-10-22', 'Uber',                           'transportes',         'expense', 199),
-  tx('2025-10-08', 'Bradesco Saúde — plano',         'saude_cuidados',      'expense', 572),
-  tx('2025-10-15', 'Drogasil — farmácia',            'saude_cuidados',      'expense', 148),
-  tx('2025-10-05', 'Mensalidade faculdade',           'educacao',            'expense', 1247),
-  tx('2025-10-08', 'Tim — celular',                  'comunicacao',         'expense', 87),
-  tx('2025-10-08', 'Claro — internet fibra',         'comunicacao',         'expense', 121),
-  tx('2025-10-20', 'Liquidificador + panelas — Americanas', 'artigos_residencia', 'expense', 315),
-  tx('2025-10-25', 'Netflix + Spotify + Max',        'despesas_pessoais',   'expense', 112),
-  tx('2025-10-28', 'Smart Fit — academia',           'despesas_pessoais',   'expense', 130),
-  tx('2025-10-31', 'Salário Outubro/25',             'alimentacao_bebidas', 'income',  9500),
-
-  // ═══════════════════════════════════════════════════════════
-  // Novembro 2025  — IPCA 0,18 %; Black Friday
-  // ═══════════════════════════════════════════════════════════
-  tx('2025-11-05', 'Supermercado Pão de Açúcar',   'alimentacao_bebidas', 'expense', 1298),
-  tx('2025-11-12', 'iFood',                          'alimentacao_bebidas', 'expense', 430),
-  tx('2025-11-19', 'Mercado Extra',                  'alimentacao_bebidas', 'expense', 668),
-  tx('2025-11-03', 'Aluguel + condomínio',           'moradia',             'expense', 3116),
-  tx('2025-11-10', 'Enel — conta de luz',            'moradia',             'expense', 278),
-  tx('2025-11-10', 'Sabesp — conta de água',         'moradia',             'expense', 110),
-  tx('2025-11-14', 'Gasolina Shell',                 'transportes',         'expense', 398),
-  tx('2025-11-21', 'Uber',                           'transportes',         'expense', 195),
-  tx('2025-11-08', 'Bradesco Saúde — plano',         'saude_cuidados',      'expense', 572),
-  tx('2025-11-14', 'Drogasil — farmácia',            'saude_cuidados',      'expense', 140),
-  tx('2025-11-05', 'Mensalidade faculdade',           'educacao',            'expense', 1247),
-  tx('2025-11-08', 'Tim — celular',                  'comunicacao',         'expense', 87),
-  tx('2025-11-08', 'Claro — internet fibra',         'comunicacao',         'expense', 121),
-  tx('2025-11-28', 'Smart TV 55" Black Friday — Kabum', 'artigos_residencia', 'expense', 1890),
-  tx('2025-11-25', 'Netflix + Spotify + Max',        'despesas_pessoais',   'expense', 112),
-  tx('2025-11-28', 'Smart Fit — academia',           'despesas_pessoais',   'expense', 130),
-  tx('2025-11-28', 'Salário Novembro/25',            'alimentacao_bebidas', 'income',  9500),
-
-  // ═══════════════════════════════════════════════════════════
-  // Dezembro 2025  — IPCA 0,33 %; Natal; 13º
-  // ═══════════════════════════════════════════════════════════
-  tx('2025-12-05', 'Supermercado Pão de Açúcar',   'alimentacao_bebidas', 'expense', 1340),
-  tx('2025-12-12', 'iFood',                          'alimentacao_bebidas', 'expense', 500),
-  tx('2025-12-19', 'Mercado Extra — ceia',           'alimentacao_bebidas', 'expense', 720),
-  tx('2025-12-03', 'Aluguel + condomínio',           'moradia',             'expense', 3116),
-  tx('2025-12-10', 'Enel — conta de luz',            'moradia',             'expense', 290),
-  tx('2025-12-10', 'Sabesp — conta de água',         'moradia',             'expense', 112),
-  tx('2025-12-13', 'Gasolina Shell',                 'transportes',         'expense', 408),
-  tx('2025-12-20', 'Uber — festas',                  'transportes',         'expense', 240),
-  tx('2025-12-08', 'Bradesco Saúde — plano',         'saude_cuidados',      'expense', 572),
-  tx('2025-12-15', 'Drogasil — farmácia',            'saude_cuidados',      'expense', 148),
-  tx('2025-12-05', 'Mensalidade faculdade',           'educacao',            'expense', 1247),
-  tx('2025-12-08', 'Tim — celular',                  'comunicacao',         'expense', 87),
-  tx('2025-12-08', 'Claro — internet fibra',         'comunicacao',         'expense', 121),
-  tx('2025-12-20', 'Presentes Natal — variados',     'despesas_pessoais',   'expense', 480),
-  tx('2025-12-25', 'Netflix + Spotify + Max',        'despesas_pessoais',   'expense', 112),
-  tx('2025-12-28', 'Smart Fit — academia',           'despesas_pessoais',   'expense', 130),
-  tx('2025-12-19', '13º salário Dezembro/25',        'alimentacao_bebidas', 'income',  9500),
-  tx('2025-12-31', 'Salário Dezembro/25',            'alimentacao_bebidas', 'income',  9500),
-
-  // ═══════════════════════════════════════════════════════════
-  // Janeiro 2026  — IPCA 0,33 %
-  // ═══════════════════════════════════════════════════════════
-  tx('2026-01-07', 'Supermercado Pão de Açúcar',   'alimentacao_bebidas', 'expense', 1355),
-  tx('2026-01-14', 'iFood',                          'alimentacao_bebidas', 'expense', 450),
-  tx('2026-01-21', 'Mercado Extra',                  'alimentacao_bebidas', 'expense', 685),
-  tx('2026-01-03', 'Aluguel + condomínio',           'moradia',             'expense', 3116),
-  tx('2026-01-10', 'Enel — conta de luz',            'moradia',             'expense', 286),
-  tx('2026-01-10', 'Sabesp — conta de água',         'moradia',             'expense', 115),
-  tx('2026-01-13', 'Gasolina Shell',                 'transportes',         'expense', 405),
-  tx('2026-01-20', 'Uber',                           'transportes',         'expense', 205),
-  tx('2026-01-08', 'Bradesco Saúde — plano',         'saude_cuidados',      'expense', 572),
-  tx('2026-01-16', 'Drogasil — farmácia',            'saude_cuidados',      'expense', 145),
-  tx('2026-01-05', 'Mensalidade faculdade',           'educacao',            'expense', 1247),
-  tx('2026-01-08', 'Tim — celular',                  'comunicacao',         'expense', 87),
-  tx('2026-01-08', 'Claro — internet fibra',         'comunicacao',         'expense', 121),
-  tx('2026-01-25', 'Netflix + Spotify + Max',        'despesas_pessoais',   'expense', 112),
-  tx('2026-01-28', 'Smart Fit — academia',           'despesas_pessoais',   'expense', 130),
-  tx('2026-01-31', 'Salário Janeiro/26',             'alimentacao_bebidas', 'income',  9500),
-
-  // ═══════════════════════════════════════════════════════════
-  // Fevereiro 2026  — IPCA 0,70 %; reajuste faculdade +6,5 %
-  // ═══════════════════════════════════════════════════════════
-  tx('2026-02-05', 'Supermercado Pão de Açúcar',   'alimentacao_bebidas', 'expense', 1380),
-  tx('2026-02-12', 'iFood — carnaval',              'alimentacao_bebidas', 'expense', 560),
-  tx('2026-02-19', 'Mercado Extra',                  'alimentacao_bebidas', 'expense', 698),
-  tx('2026-02-03', 'Aluguel + condomínio',           'moradia',             'expense', 3116),
-  tx('2026-02-10', 'Enel — conta de luz',            'moradia',             'expense', 298),
-  tx('2026-02-10', 'Sabesp — conta de água',         'moradia',             'expense', 118),
-  tx('2026-02-12', 'Gasolina Shell',                 'transportes',         'expense', 418),
-  tx('2026-02-19', 'Uber — deslocamentos carnaval',  'transportes',         'expense', 238),
-  tx('2026-02-08', 'Bradesco Saúde — plano',         'saude_cuidados',      'expense', 572),
-  tx('2026-02-14', 'Drogasil — farmácia',            'saude_cuidados',      'expense', 165),
-  tx('2026-02-05', 'Mensalidade faculdade',           'educacao',            'expense', 1328),
-  tx('2026-02-08', 'Tim — celular',                  'comunicacao',         'expense', 87),
-  tx('2026-02-08', 'Claro — internet fibra',         'comunicacao',         'expense', 121),
-  tx('2026-02-22', 'Roupas carnaval + acessórios',   'vestuario',           'expense', 248),
-  tx('2026-02-25', 'Netflix + Spotify + Max',        'despesas_pessoais',   'expense', 112),
-  tx('2026-02-28', 'Smart Fit — academia',           'despesas_pessoais',   'expense', 130),
-  tx('2026-02-28', 'Salário Fevereiro/26',           'alimentacao_bebidas', 'income',  9500),
-
-  // ═══════════════════════════════════════════════════════════
-  // Março 2026  — IPCA 0,88 % (mês mais recente disponível)
-  // ═══════════════════════════════════════════════════════════
-  tx('2026-03-05', 'Supermercado Pão de Açúcar',   'alimentacao_bebidas', 'expense', 1410),
-  tx('2026-03-12', 'iFood',                          'alimentacao_bebidas', 'expense', 468),
-  tx('2026-03-19', 'Mercado Extra',                  'alimentacao_bebidas', 'expense', 718),
-  tx('2026-03-03', 'Aluguel + condomínio',           'moradia',             'expense', 3116),
-  tx('2026-03-10', 'Enel — conta de luz',            'moradia',             'expense', 310),
-  tx('2026-03-10', 'Sabesp — conta de água',         'moradia',             'expense', 120),
-  tx('2026-03-13', 'Gasolina Shell',                 'transportes',         'expense', 425),
-  tx('2026-03-20', 'Uber',                           'transportes',         'expense', 215),
-  tx('2026-03-08', 'Bradesco Saúde — plano',         'saude_cuidados',      'expense', 572),
-  tx('2026-03-15', 'Drogasil — farmácia',            'saude_cuidados',      'expense', 158),
-  tx('2026-03-05', 'Mensalidade faculdade',           'educacao',            'expense', 1328),
-  tx('2026-03-08', 'Tim — celular',                  'comunicacao',         'expense', 87),
-  tx('2026-03-08', 'Claro — internet fibra',         'comunicacao',         'expense', 121),
-  tx('2026-03-22', 'Tênis verão — Netshoes',         'vestuario',           'expense', 298),
-  tx('2026-03-25', 'Netflix + Spotify + Max',        'despesas_pessoais',   'expense', 112),
-  tx('2026-03-28', 'Smart Fit — academia',           'despesas_pessoais',   'expense', 130),
-  tx('2026-03-31', 'Salário Março/26',               'alimentacao_bebidas', 'income',  9500),
-];
+// Alias legado (usado por código ainda não migrado)
+export const DEMO_TRANSACTIONS = DEMO_TRANSACTIONS_ABOVE;
