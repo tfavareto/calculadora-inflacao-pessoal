@@ -24,27 +24,37 @@ export default function App() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [txLoading, setTxLoading] = useState(true);
 
-  // IPCA nacional
+  // IPCA nacional — sempre usado pelo Dashboard
   const [nationalIpca, setNationalIpca] = useState<Record<string, number>>(FALLBACK_IPCA);
   const [ipcaLoading, setIpcaLoading] = useState(false);
 
-  // IPCA regional
+  // IPCA regional — usado exclusivamente pelo Minha Cidade
   const [selectedRegionCode, setSelectedRegionCode] = useState<string | null>(() => loadRegion());
   const [regionalIpca, setRegionalIpca] = useState<Record<string, number>>({});
   const [regionalLoading, setRegionalLoading] = useState(false);
 
-  // IPCA ativo: regional se cidade selecionada E dados carregados, nacional caso contrário
   const hasRegionalData = selectedRegionCode !== null && Object.keys(regionalIpca).length > 0;
-  const activeIpca = hasRegionalData ? regionalIpca : nationalIpca;
 
-  const [inflationData, setInflationData] = useState<InflationPoint[]>([]);
+  // Dashboard: sempre IPCA Nacional
+  const [nationalInflationData, setNationalInflationData] = useState<InflationPoint[]>([]);
+
+  // Minha Cidade: IPCA do estado selecionado (fallback para nacional se sem dados)
+  const [myCityInflationData, setMyCityInflationData] = useState<InflationPoint[]>([]);
+
+  // Pesos de categoria (independente do IPCA escolhido)
   const [categoryWeights, setCategoryWeights] = useState<CategoryWeight[]>([]);
 
-  // Recalcula inflação quando dados mudam
+  // Recalcula Dashboard com IPCA Nacional
   useEffect(() => {
-    setInflationData(calculateInflation(transactions, activeIpca));
+    setNationalInflationData(calculateInflation(transactions, nationalIpca));
     setCategoryWeights(getCategoryWeights(transactions));
-  }, [transactions, activeIpca]);
+  }, [transactions, nationalIpca]);
+
+  // Recalcula Minha Cidade com IPCA regional (ou nacional como fallback)
+  useEffect(() => {
+    const ipca = hasRegionalData ? regionalIpca : nationalIpca;
+    setMyCityInflationData(calculateInflation(transactions, ipca));
+  }, [transactions, regionalIpca, nationalIpca, hasRegionalData]);
 
   // Carrega transações do backend na montagem
   useEffect(() => {
@@ -110,9 +120,9 @@ export default function App() {
       {page === 'dashboard' && (
         <Dashboard
           transactions={transactions}
-          inflationData={inflationData}
+          inflationData={nationalInflationData}
           categoryWeights={categoryWeights}
-          ipcaLoading={ipcaLoading || regionalLoading || txLoading}
+          ipcaLoading={ipcaLoading || txLoading}
           selectedRegionCode={selectedRegionCode}
           onGoToTransactions={() => setPage('transactions')}
           onGoToMyCity={() => setPage('mycity')}
@@ -130,7 +140,7 @@ export default function App() {
       {page === 'mycity' && (
         <MyCity
           transactions={transactions}
-          inflationData={inflationData}
+          inflationData={myCityInflationData}
           categoryWeights={categoryWeights}
           selectedRegionCode={selectedRegionCode}
           hasRegionalData={hasRegionalData}

@@ -39,38 +39,22 @@ export default function Dashboard({
         <div>
           <h1 className="text-xl font-bold" style={{ color: 'var(--text-1)' }}>Dashboard</h1>
           <p className="text-sm mt-0.5" style={{ color: 'var(--text-2)' }}>
-            Sua inflação pessoal vs. IPCA {region ? `regional de ${region.city}` : 'oficial do IBGE'}
+            Sua inflação pessoal vs. IPCA Nacional (Brasil)
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          {/* Badge da cidade */}
-          {region ? (
-            <button
-              onClick={onGoToMyCity}
-              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-colors"
-              style={{
-                background: 'rgba(139,92,246,0.12)',
-                border: '1px solid rgba(139,92,246,0.25)',
-                color: '#C4B5FD',
-              }}
-            >
-              <span>{region.emoji}</span>
-              {region.city}
-            </button>
-          ) : (
-            <button
-              onClick={onGoToMyCity}
-              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-colors"
-              style={{
-                background: 'rgba(255,255,255,0.04)',
-                border: '1px solid rgba(255,255,255,0.08)',
-                color: 'var(--text-3)',
-              }}
-            >
-              <MapPin size={12} />
-              Definir cidade
-            </button>
-          )}
+          {/* Atalho para Minha Cidade */}
+          <button
+            onClick={onGoToMyCity}
+            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-colors"
+            style={region
+              ? { background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.25)', color: '#C4B5FD' }
+              : { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'var(--text-3)' }
+            }
+            title="Ver comparativo com IPCA regional"
+          >
+            {region ? <><span>{region.emoji}</span>{region.city} →</> : <><MapPin size={12} />Minha Cidade</>}
+          </button>
           {ipcaLoading && (
             <div
               className="flex items-center gap-2 text-xs px-3 py-1.5 rounded-lg"
@@ -121,7 +105,7 @@ export default function Dashboard({
             <p className="text-xs mt-0.5" style={{ color: 'var(--text-2)' }}>
               Minha inflação acumulada:{' '}
               <span className="font-semibold text-slate-200">{formatPct(last.personalAccumulated)}</span>
-              {' '}·{' '}IPCA:{' '}
+              {' '}·{' '}IPCA Nacional:{' '}
               <span className="font-semibold text-slate-200">{formatPct(last.ipcaAccumulated)}</span>
             </p>
           </div>
