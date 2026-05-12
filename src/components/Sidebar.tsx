@@ -1,4 +1,4 @@
-import { LayoutDashboard, ArrowLeftRight, BookOpen, TrendingUp, MapPin, type LucideIcon } from 'lucide-react';
+import { LayoutDashboard, ArrowLeftRight, BookOpen, TrendingUp, MapPin, HelpCircle, type LucideIcon } from 'lucide-react';
 import { PageKey } from '../types';
 import { getRegion } from '../regions';
 
@@ -9,10 +9,11 @@ interface Props {
 }
 
 const LINKS: { key: PageKey; label: string; Icon: LucideIcon; desc: string }[] = [
-  { key: 'dashboard',    label: 'Dashboard',     desc: 'Visão geral',        Icon: LayoutDashboard },
-  { key: 'transactions', label: 'Movimentações', desc: 'Seus gastos',        Icon: ArrowLeftRight  },
-  { key: 'mycity',       label: 'Minha Cidade',  desc: 'IPCA regional',      Icon: MapPin          },
-  { key: 'methodology',  label: 'Metodologia',   desc: 'Como calculamos',    Icon: BookOpen        },
+  { key: 'dashboard',    label: 'Dashboard',          desc: 'Visão geral',        Icon: LayoutDashboard },
+  { key: 'transactions', label: 'Movimentações',      desc: 'Seus gastos',        Icon: ArrowLeftRight  },
+  { key: 'mycity',       label: 'Minha Cidade',       desc: 'IPCA regional',      Icon: MapPin          },
+  { key: 'methodology',  label: 'Metodologia',        desc: 'Como calculamos',    Icon: BookOpen        },
+  { key: 'inflation',    label: 'O que é Inflação?',  desc: 'Guia educativo',     Icon: HelpCircle      },
 ];
 
 export default function Sidebar({ current, onChange, selectedRegionCode }: Props) {
@@ -27,16 +28,16 @@ export default function Sidebar({ current, onChange, selectedRegionCode }: Props
         <div className="flex items-center gap-3">
           <div
             className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-            style={{ background: 'linear-gradient(135deg, #7c3aed, #4c1d95)' }}
+            style={{ background: 'linear-gradient(135deg, #1B3D6F, #00CC96)' }}
           >
             <TrendingUp size={17} className="text-white" />
           </div>
           <div>
             <p className="text-white font-semibold text-sm leading-tight tracking-tight">
-              Inflação
+              Meu IPCA
             </p>
             <p className="text-xs leading-tight font-medium" style={{ color: 'var(--text-3)' }}>
-              Pessoal
+              Inflação Pessoal
             </p>
           </div>
         </div>

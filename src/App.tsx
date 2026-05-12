@@ -18,6 +18,7 @@ import Dashboard from './pages/Dashboard';
 import Transactions from './pages/Transactions';
 import Methodology from './pages/Methodology';
 import MyCity from './pages/MyCity';
+import WhatIsInflation from './pages/WhatIsInflation';
 
 export default function App() {
   const [page, setPage] = useState<PageKey>('dashboard');
@@ -149,6 +150,7 @@ export default function App() {
         />
       )}
       {page === 'methodology' && <Methodology />}
+      {page === 'inflation' && <WhatIsInflation />}
     </Layout>
   );
 }
