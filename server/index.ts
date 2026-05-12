@@ -31,15 +31,44 @@ app.get('*', (_req, res) => {
 
 /* ── Bootstrap ──────────────────────────────────────────── */
 async function bootstrap() {
+  /* Validação da DATABASE_URL ─────────────────────────────
+   * Railway: adicione a variável de referência no painel do serviço:
+   *   Nome:  DATABASE_URL
+   *   Valor: ${{Postgres.DATABASE_URL}}
+   * ─────────────────────────────────────────────────────── */
   if (!process.env.DATABASE_URL) {
-    console.error('[Server] ❌ DATABASE_URL não configurada. Configure o PostgreSQL no Railway.');
+    console.error(`
+╔══════════════════════════════════════════════════════════════╗
+║  DATABASE_URL não encontrada — servidor não pode iniciar.   ║
+║                                                              ║
+║  No Railway, acesse o serviço da app → aba Variables e      ║
+║  adicione a variável de referência:                         ║
+║    Nome:  DATABASE_URL                                       ║
+║    Valor: \${{Postgres.DATABASE_URL}}                        ║
+║                                                              ║
+║  Depois clique em "Deploy" para reiniciar.                  ║
+╚══════════════════════════════════════════════════════════════╝
+    `.trim());
+    // Aguarda 10 s antes de sair para evitar loop de restart acelerado
+    await new Promise((r) => setTimeout(r, 10_000));
     process.exit(1);
   }
 
-  try {
-    await initDB();
-  } catch (e) {
-    console.error('[Server] ❌ Falha ao inicializar banco de dados:', e);
+  /* Conexão com o banco ────────────────────────────────── */
+  let dbReady = false;
+  for (let attempt = 1; attempt <= 5; attempt++) {
+    try {
+      await initDB();
+      dbReady = true;
+      break;
+    } catch (e) {
+      console.error(`[DB] Tentativa ${attempt}/5 falhou:`, (e as Error).message);
+      if (attempt < 5) await new Promise((r) => setTimeout(r, 3000 * attempt));
+    }
+  }
+
+  if (!dbReady) {
+    console.error('[Server] ❌ Não foi possível conectar ao banco após 5 tentativas. Encerrando.');
     process.exit(1);
   }
 

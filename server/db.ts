@@ -4,14 +4,18 @@ import { REGIONS } from '../src/regions.js';
 
 const { Pool } = pg;
 
+/**
+ * SSL: Railway usa certificados auto-assinados em ambos os modos
+ * (private networking e URL pública). rejectUnauthorized: false cobre
+ * os dois casos. Em dev local sem SSL (localhost), a conexão também
+ * funciona — pg ignora a config SSL se o servidor não a exigir.
+ */
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL?.includes('railway')
-    ? { rejectUnauthorized: false }
-    : undefined,
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : undefined,
   max: 10,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 5000,
+  connectionTimeoutMillis: 8000,
 });
 
 export default pool;
@@ -19,36 +23,36 @@ export default pool;
 /* ─── Schema ─────────────────────────────────────────────── */
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS transactions (
-  id          TEXT        PRIMARY KEY,
-  date        TEXT        NOT NULL,
-  description TEXT        NOT NULL,
-  category    TEXT        NOT NULL,
-  type        TEXT        NOT NULL,
+  id          TEXT          PRIMARY KEY,
+  date        TEXT          NOT NULL,
+  description TEXT          NOT NULL,
+  category    TEXT          NOT NULL,
+  type        TEXT          NOT NULL,
   amount      NUMERIC(12,2) NOT NULL,
-  created_at  TIMESTAMPTZ DEFAULT NOW()
+  created_at  TIMESTAMPTZ   DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS ipca_national (
-  period     CHAR(6)      PRIMARY KEY,
-  value      NUMERIC(8,4) NOT NULL,
-  updated_at TIMESTAMPTZ  DEFAULT NOW()
+  period     CHAR(6)       PRIMARY KEY,
+  value      NUMERIC(8,4)  NOT NULL,
+  updated_at TIMESTAMPTZ   DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS ipca_regional (
-  period      CHAR(6)      NOT NULL,
-  region_code TEXT         NOT NULL,
-  value       NUMERIC(8,4) NOT NULL,
-  updated_at  TIMESTAMPTZ  DEFAULT NOW(),
+  period      CHAR(6)       NOT NULL,
+  region_code TEXT          NOT NULL,
+  value       NUMERIC(8,4)  NOT NULL,
+  updated_at  TIMESTAMPTZ   DEFAULT NOW(),
   PRIMARY KEY (period, region_code)
 );
 `;
 
-/* ─── Seed FALLBACK_IPCA when national table is empty ─────── */
+/* ─── Seed FALLBACK_IPCA quando a tabela nacional está vazia ─ */
 async function seedNationalIfEmpty(client: pg.PoolClient) {
   const { rows } = await client.query('SELECT COUNT(*) FROM ipca_national');
   if (parseInt(rows[0].count, 10) > 0) return;
 
-  console.log('[DB] Seeding national IPCA from FALLBACK_IPCA…');
+  console.log('[DB] Populando IPCA nacional com FALLBACK_IPCA…');
   for (const [period, value] of Object.entries(FALLBACK_IPCA)) {
     await client.query(
       `INSERT INTO ipca_national (period, value)
@@ -56,22 +60,22 @@ async function seedNationalIfEmpty(client: pg.PoolClient) {
       [period, value],
     );
   }
-  console.log(`[DB] Seeded ${Object.keys(FALLBACK_IPCA).length} national IPCA entries.`);
+  console.log(`[DB] ${Object.keys(FALLBACK_IPCA).length} períodos do IPCA nacional inseridos.`);
 }
 
-/* ─── Init: create tables + seed ─────────────────────────── */
+/* ─── Init: cria tabelas + seed ───────────────────────────── */
 export async function initDB(): Promise<void> {
   const client = await pool.connect();
   try {
     await client.query(SCHEMA);
     await seedNationalIfEmpty(client);
-    console.log('[DB] Schema ready.');
+    console.log('[DB] Schema pronto.');
   } finally {
     client.release();
   }
 }
 
-/* ─── Helper to upsert a batch of IPCA values ─────────────── */
+/* ─── Upsert em lote — IPCA nacional ──────────────────────── */
 export async function upsertNational(data: Record<string, number>): Promise<number> {
   if (Object.keys(data).length === 0) return 0;
   const client = await pool.connect();
@@ -93,6 +97,7 @@ export async function upsertNational(data: Record<string, number>): Promise<numb
   }
 }
 
+/* ─── Upsert em lote — IPCA regional ──────────────────────── */
 export async function upsertRegional(
   regionCode: string,
   data: Record<string, number>,
@@ -117,7 +122,6 @@ export async function upsertRegional(
   }
 }
 
-/* ─── Log update run ──────────────────────────────────────── */
-export async function getRegionList() {
+export function getRegionList() {
   return REGIONS;
 }
