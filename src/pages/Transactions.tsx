@@ -3,6 +3,7 @@ import { PlusCircle, TrendingUp, TrendingDown, Trash2 } from 'lucide-react';
 import { Transaction } from '../types';
 import TransactionForm from '../components/TransactionForm';
 import TransactionList from '../components/TransactionList';
+import TransactionSummary from '../components/TransactionSummary';
 
 interface Props {
   transactions: Transaction[];
@@ -94,6 +95,10 @@ export default function Transactions({
           </button>
         </div>
       </div>
+
+      {transactions.length > 0 && (
+        <TransactionSummary transactions={transactions} />
+      )}
 
       <TransactionList transactions={transactions} onDelete={onDelete} />
 
