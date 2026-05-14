@@ -251,6 +251,10 @@ export default function TransactionSummary({ transactions }: Props) {
                   axisLine={false}
                   tickLine={false}
                   width={48}
+                  domain={([min, max]: [number, number]) => {
+                    const pad = (max - min) * 0.15 || max * 0.1;
+                    return [Math.max(0, Math.floor(min - pad)), Math.ceil(max + pad)];
+                  }}
                 />
                 <Tooltip
                   content={(props) => (
