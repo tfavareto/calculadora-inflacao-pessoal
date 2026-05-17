@@ -133,15 +133,15 @@ export default function TransactionSummary({ transactions }: Props) {
             Participação por Grupo
           </p>
 
-          <div className="flex gap-4 items-center">
+          <div className="flex flex-col xs:flex-row gap-3 xs:gap-4 items-center xs:items-start">
             {/* donut */}
-            <div className="shrink-0" style={{ width: 160, height: 160 }}>
+            <div className="shrink-0" style={{ width: 140, height: 140 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={pieData}
                     cx="50%" cy="50%"
-                    innerRadius={46} outerRadius={74}
+                    innerRadius={40} outerRadius={64}
                     paddingAngle={2}
                     dataKey="value"
                     onClick={(d) => setSelectedCat(d.category as IPCACategory)}
@@ -163,7 +163,7 @@ export default function TransactionSummary({ transactions }: Props) {
             </div>
 
             {/* legenda clicável */}
-            <div className="flex-1 min-w-0 space-y-1 overflow-y-auto" style={{ maxHeight: 160 }}>
+            <div className="flex-1 min-w-0 w-full space-y-1 overflow-y-auto" style={{ maxHeight: 160 }}>
               {pieData.map((d) => {
                 const isActive = activeCat === d.category;
                 return (

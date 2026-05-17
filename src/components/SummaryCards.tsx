@@ -24,34 +24,34 @@ interface CardProps {
 
 function Card({ title, value, sub, Icon, iconBg, iconColor, valueColor, badge }: CardProps) {
   return (
-    <div className="card p-5 flex flex-col gap-4">
+    <div className="card p-4 sm:p-5 flex flex-col gap-3 sm:gap-4">
       <div className="flex items-start justify-between">
         <div
-          className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+          className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center shrink-0"
           style={{ background: iconBg }}
         >
-          <Icon size={16} style={{ color: iconColor }} />
+          <Icon size={15} style={{ color: iconColor }} />
         </div>
         {badge && (
           <span
-            className={`chip ${badge.positive ? 'chip-emerald' : 'chip-rose'}`}
+            className={`chip ${badge.positive ? 'chip-emerald' : 'chip-rose'} text-[10px] sm:text-xs`}
           >
             {badge.label}
           </span>
         )}
       </div>
       <div>
-        <p className="text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: 'var(--text-3)' }}>
+        <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: 'var(--text-3)' }}>
           {title}
         </p>
         <p
-          className="text-2xl font-bold tracking-tight"
+          className="text-lg sm:text-2xl font-bold tracking-tight truncate"
           style={{ color: valueColor ?? 'var(--text-1)' }}
         >
           {value}
         </p>
         {sub && (
-          <p className="text-xs mt-1" style={{ color: 'var(--text-3)' }}>
+          <p className="text-[10px] sm:text-xs mt-1 truncate" style={{ color: 'var(--text-3)' }}>
             {sub}
           </p>
         )}

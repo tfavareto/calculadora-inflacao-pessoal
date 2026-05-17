@@ -111,9 +111,9 @@ export default function MyCity({
     <div className="space-y-6">
 
       {/* Header */}
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
-          <div className="flex items-center gap-2 mb-0.5">
+          <div className="flex items-center gap-2 mb-0.5 flex-wrap">
             <h1 className="text-xl font-bold" style={{ color: 'var(--text-1)' }}>Minha Cidade</h1>
             {regionalLoading && (
               <span
@@ -261,9 +261,9 @@ export default function MyCity({
           </p>
           <div className="space-y-3">
             {categoryWeights.map((cw) => (
-              <div key={cw.category} className="flex items-center gap-3">
-                <span className="text-base w-6 text-center">{cw.emoji}</span>
-                <span className="text-xs w-44 truncate" style={{ color: 'var(--text-2)' }}>
+              <div key={cw.category} className="flex items-center gap-2 sm:gap-3">
+                <span className="text-sm w-5 sm:w-6 text-center shrink-0">{cw.emoji}</span>
+                <span className="text-[11px] sm:text-xs w-24 sm:w-44 truncate shrink-0" style={{ color: 'var(--text-2)' }}>
                   {cw.label}
                 </span>
                 <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.07)' }}>
@@ -272,10 +272,10 @@ export default function MyCity({
                     style={{ width: `${(cw.weight * 100).toFixed(1)}%`, background: cw.color }}
                   />
                 </div>
-                <span className="text-xs font-semibold w-12 text-right" style={{ color: cw.color }}>
+                <span className="text-[11px] sm:text-xs font-semibold w-10 sm:w-12 text-right shrink-0" style={{ color: cw.color }}>
                   {(cw.weight * 100).toFixed(1)}%
                 </span>
-                <span className="text-xs w-24 text-right hidden md:block" style={{ color: 'var(--text-3)' }}>
+                <span className="text-xs w-24 text-right hidden md:block shrink-0" style={{ color: 'var(--text-3)' }}>
                   {formatBRL(cw.baseSpend)}
                 </span>
               </div>

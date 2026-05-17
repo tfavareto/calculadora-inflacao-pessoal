@@ -32,7 +32,8 @@ export default function Transactions({
 
   return (
     <div className="space-y-5">
-      <div className="flex items-start justify-between gap-4">
+      {/* Header — empilha no mobile, linha única no desktop */}
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold" style={{ color: 'var(--text-1)' }}>
             Movimentações
@@ -42,7 +43,7 @@ export default function Transactions({
           </p>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex flex-wrap items-center gap-2">
           {transactions.length === 0 ? (
             <>
               <button
@@ -56,7 +57,7 @@ export default function Transactions({
                 title="Casal com filhos — gastos pesados em alimentação, educação e saúde. Inflação pessoal ≈ 14,8 %"
               >
                 <TrendingUp size={13} />
-                Demo: Acima do IPCA
+                <span className="hidden xs:inline">Demo: </span>Acima do IPCA
               </button>
               <button
                 onClick={onLoadDemoBelow}
@@ -69,7 +70,7 @@ export default function Transactions({
                 title="Jovem profissional solteiro — gastos controlados, peso alto em moradia e comunicação. Inflação pessoal ≈ 6,4 %"
               >
                 <TrendingDown size={13} />
-                Demo: Abaixo do IPCA
+                <span className="hidden xs:inline">Demo: </span>Abaixo do IPCA
               </button>
             </>
           ) : (
@@ -91,7 +92,7 @@ export default function Transactions({
             className="btn-primary flex items-center gap-2 text-sm"
           >
             <PlusCircle size={15} />
-            Nova Movimentação
+            <span className="hidden xs:inline">Nova </span>Movimentação
           </button>
         </div>
       </div>

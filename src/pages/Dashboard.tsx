@@ -35,28 +35,26 @@ export default function Dashboard({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-xl font-bold" style={{ color: 'var(--text-1)' }}>Dashboard</h1>
           <p className="text-sm mt-0.5" style={{ color: 'var(--text-2)' }}>
             Sua inflação pessoal vs. IPCA Nacional (Brasil)
           </p>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
-          {ipcaLoading && (
-            <div
-              className="flex items-center gap-2 text-xs px-3 py-1.5 rounded-lg"
-              style={{
-                background: 'rgba(249,115,22,0.08)',
-                border: '1px solid rgba(249,115,22,0.20)',
-                color: '#FB923C',
-              }}
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
-              Atualizando IPCA...
-            </div>
-          )}
-        </div>
+        {ipcaLoading && (
+          <div
+            className="flex items-center gap-2 text-xs px-3 py-1.5 rounded-lg"
+            style={{
+              background: 'rgba(249,115,22,0.08)',
+              border: '1px solid rgba(249,115,22,0.20)',
+              color: '#FB923C',
+            }}
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
+            Atualizando IPCA...
+          </div>
+        )}
       </div>
 
       {/* KPI Cards */}
@@ -134,9 +132,9 @@ export default function Dashboard({
           </p>
           <div className="space-y-3">
             {categoryWeights.map((cw) => (
-              <div key={cw.category} className="flex items-center gap-3">
-                <span className="text-base w-6 text-center">{cw.emoji}</span>
-                <span className="text-xs w-44 truncate" style={{ color: 'var(--text-2)' }}>
+              <div key={cw.category} className="flex items-center gap-2 sm:gap-3">
+                <span className="text-sm w-5 sm:w-6 text-center shrink-0">{cw.emoji}</span>
+                <span className="text-[11px] sm:text-xs w-24 sm:w-44 truncate shrink-0" style={{ color: 'var(--text-2)' }}>
                   {cw.label}
                 </span>
                 <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.07)' }}>
@@ -145,10 +143,10 @@ export default function Dashboard({
                     style={{ width: `${(cw.weight * 100).toFixed(1)}%`, background: cw.color }}
                   />
                 </div>
-                <span className="text-xs font-semibold w-12 text-right" style={{ color: cw.color }}>
+                <span className="text-[11px] sm:text-xs font-semibold w-10 sm:w-12 text-right shrink-0" style={{ color: cw.color }}>
                   {(cw.weight * 100).toFixed(1)}%
                 </span>
-                <span className="text-xs w-24 text-right hidden md:block" style={{ color: 'var(--text-3)' }}>
+                <span className="text-xs w-24 text-right hidden md:block shrink-0" style={{ color: 'var(--text-3)' }}>
                   {formatBRL(cw.baseSpend)}
                 </span>
               </div>
