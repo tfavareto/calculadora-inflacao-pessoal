@@ -67,19 +67,21 @@ export default function TermsModal({ onClose }: Props) {
           <X size={15} style={{ color: 'var(--text-2)' }} />
         </button>
 
-        <h2 className="text-base font-bold text-white mb-0.5">Termos de Uso</h2>
+        <h2 className="text-xl font-bold text-white mb-1">Termos de Uso</h2>
         <p className="text-xs mb-6" style={{ color: 'var(--text-3)' }}>
           Última atualização: junho de 2025
         </p>
 
-        <div className="space-y-5">
+        <div className="space-y-6">
           {sections.map(s => (
             <div key={s.title}>
-              <p className="text-xs font-semibold text-white mb-1">{s.title}</p>
               <p
-                className="text-xs leading-relaxed whitespace-pre-line"
-                style={{ color: 'var(--text-2)' }}
+                className="text-[11px] font-bold uppercase tracking-wider mb-2"
+                style={{ color: '#F97316' }}
               >
+                {s.title}
+              </p>
+              <p className="text-sm leading-relaxed whitespace-pre-line text-white">
                 {s.body}
               </p>
             </div>

@@ -88,20 +88,18 @@ export default function Sidebar({ current, onChange }: Props) {
           rel="noopener noreferrer"
           className="flex items-center gap-2 px-1 py-0.5 rounded transition-opacity hover:opacity-70"
         >
-          {/* Instagram icon SVG */}
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" className="shrink-0" style={{ color: 'var(--text-3)' }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" className="shrink-0 text-white">
             <rect x="2" y="2" width="20" height="20" rx="5" ry="5" stroke="currentColor" strokeWidth="2"/>
             <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="2"/>
             <circle cx="17.5" cy="6.5" r="1" fill="currentColor"/>
           </svg>
-          <span className="text-[11px]" style={{ color: 'var(--text-3)' }}>@macro_panorama</span>
+          <span className="text-[11px] text-white">@macro_panorama</span>
         </a>
 
         {/* Termos de Uso */}
         <button
           onClick={() => setShowTerms(true)}
-          className="block w-full text-left px-1 py-0.5 text-[11px] rounded transition-opacity hover:opacity-70"
-          style={{ color: 'var(--text-3)' }}
+          className="block w-full text-left px-1 py-0.5 text-[11px] text-white rounded transition-opacity hover:opacity-70"
         >
           Termos de Uso
         </button>
@@ -109,11 +107,15 @@ export default function Sidebar({ current, onChange }: Props) {
         {/* Política de Privacidade */}
         <button
           onClick={() => setShowPrivacy(true)}
-          className="block w-full text-left px-1 py-0.5 text-[11px] rounded transition-opacity hover:opacity-70"
-          style={{ color: 'var(--text-3)' }}
+          className="block w-full text-left px-1 py-0.5 text-[11px] text-white rounded transition-opacity hover:opacity-70"
         >
           Política de Privacidade
         </button>
+
+        {/* Copyright */}
+        <p className="px-1 pt-1 text-[10px] text-white leading-snug">
+          © Meu IPCA — Um produto<br />Macro Panorama
+        </p>
       </div>
 
       {showTerms   && <TermsModal   onClose={() => setShowTerms(false)}   />}
