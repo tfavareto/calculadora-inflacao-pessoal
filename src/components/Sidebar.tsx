@@ -1,11 +1,13 @@
+import { useState } from 'react';
 import { LayoutDashboard, ArrowLeftRight, BookOpen, MapPin, HelpCircle, type LucideIcon } from 'lucide-react';
 import { PageKey } from '../types';
-import { getRegion } from '../regions';
+import TermsModal from './TermsModal';
+import PrivacyModal from './PrivacyModal';
 
 interface Props {
   current: PageKey;
   onChange: (p: PageKey) => void;
-  selectedRegionCode: string | null;
+  selectedRegionCode?: string | null;
 }
 
 const LINKS: { key: PageKey; label: string; Icon: LucideIcon; desc: string }[] = [
@@ -16,8 +18,10 @@ const LINKS: { key: PageKey; label: string; Icon: LucideIcon; desc: string }[] =
   { key: 'inflation',    label: 'O que é Inflação?',  desc: 'Guia educativo',     Icon: HelpCircle      },
 ];
 
-export default function Sidebar({ current, onChange, selectedRegionCode }: Props) {
-  const region = selectedRegionCode ? getRegion(selectedRegionCode) : null;
+export default function Sidebar({ current, onChange }: Props) {
+  const [showTerms, setShowTerms] = useState(false);
+  const [showPrivacy, setShowPrivacy] = useState(false);
+
   return (
     <aside
       className="fixed left-0 top-0 h-screen w-60 flex flex-col z-30"
@@ -77,23 +81,43 @@ export default function Sidebar({ current, onChange, selectedRegionCode }: Props
 
       {/* Footer */}
       <div className="px-4 py-4 space-y-2" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-        {/* Cidade selecionada */}
-        {region && (
-          <button
-            onClick={() => onChange('mycity')}
-            className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg transition-colors"
-            style={{ background: 'rgba(249,115,22,0.10)', border: '1px solid rgba(249,115,22,0.22)' }}
-          >
-            <MapPin size={13} className="shrink-0" style={{ color: '#F97316' }} />
-            <div className="flex-1 text-left min-w-0">
-              <p className="text-[11px] font-semibold truncate" style={{ color: '#FB923C' }}>
-                {region.city}
-              </p>
-              <p className="text-[10px]" style={{ color: 'var(--text-3)' }}>IPCA regional ativo</p>
-            </div>
-          </button>
-        )}
+        {/* Instagram */}
+        <a
+          href="https://instagram.com/macro_panorama"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-2 px-1 py-0.5 rounded transition-opacity hover:opacity-70"
+        >
+          {/* Instagram icon SVG */}
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" className="shrink-0" style={{ color: 'var(--text-3)' }}>
+            <rect x="2" y="2" width="20" height="20" rx="5" ry="5" stroke="currentColor" strokeWidth="2"/>
+            <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="2"/>
+            <circle cx="17.5" cy="6.5" r="1" fill="currentColor"/>
+          </svg>
+          <span className="text-[11px]" style={{ color: 'var(--text-3)' }}>@macro_panorama</span>
+        </a>
+
+        {/* Termos de Uso */}
+        <button
+          onClick={() => setShowTerms(true)}
+          className="block w-full text-left px-1 py-0.5 text-[11px] rounded transition-opacity hover:opacity-70"
+          style={{ color: 'var(--text-3)' }}
+        >
+          Termos de Uso
+        </button>
+
+        {/* Política de Privacidade */}
+        <button
+          onClick={() => setShowPrivacy(true)}
+          className="block w-full text-left px-1 py-0.5 text-[11px] rounded transition-opacity hover:opacity-70"
+          style={{ color: 'var(--text-3)' }}
+        >
+          Política de Privacidade
+        </button>
       </div>
+
+      {showTerms   && <TermsModal   onClose={() => setShowTerms(false)}   />}
+      {showPrivacy && <PrivacyModal onClose={() => setShowPrivacy(false)} />}
     </aside>
   );
 }
